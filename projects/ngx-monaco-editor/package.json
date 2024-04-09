@@ -1,6 +1,24 @@
 {
   "name": "@jean-merelis/ngx-monaco-editor",
-  "version": "0.0.1",
+  "version": "17.0.0",
+  "private": false,
+  "license": "MIT",
+  "description": "Monaco Code Editor for Angular",
+  "keywords": [
+    "angular",
+    "monaco",
+    "monaco-editor",
+    "code",
+    "ngx-monaco-editor"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jean-merelis/ngx-monaco-editor.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jean-merelis/ngx-monaco-editor/issues"
+  },
+  "author": "Jean Merelis",
   "peerDependencies": {
     "@angular/common": "^17.3.0",
     "@angular/core": "^17.3.0",

@@ -1,0 +1,23 @@
+
+<ngx-monaco-editor #editor [options]="{automaticLayout:false,minimap:{enabled:false},lineNumbers:false,contextmenu:false,wordBasedSuggestions:false, wordWrap:'on'}"
+                   [language]="'typescript'"  [(ngModel)]="code" style="height: 64px" theme="vs-dark"
+                   (editorInitialized)="editorInitialized($event)"
+                   (focus)="onFocus()"
+                   (blur)="onBlur()"
+></ngx-monaco-editor>
+
+
+<button type="button" (click)="editor.focus()">Set focus in the editor</button>
+
+<div style="margin: 20px">
+  {{ code }}
+</div>
+
+Events:
+<ul>
+  @for (evt of events; track evt) {
+    <li>
+       {{evt}}
+    </li>
+  }
+</ul>

@@ -35,6 +35,108 @@
           }
         }
       }
+    },
+    "@jean-merelis/ngx-monaco-editor-demo": {
+      "projectType": "application",
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "scss"
+        }
+      },
+      "root": "projects/ngx-monaco-editor-demo",
+      "sourceRoot": "projects/ngx-monaco-editor-demo/src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:application",
+          "options": {
+            "outputPath": "dist/jean-merelis/ngx-monaco-editor-demo",
+            "index": "projects/ngx-monaco-editor-demo/src/index.html",
+            "browser": "projects/ngx-monaco-editor-demo/src/main.ts",
+            "polyfills": [
+              "zone.js"
+            ],
+            "tsConfig": "projects/ngx-monaco-editor-demo/tsconfig.app.json",
+            "inlineStyleLanguage": "scss",
+            "assets": [
+              "projects/ngx-monaco-editor-demo/src/favicon.ico",
+              "projects/ngx-monaco-editor-demo/src/assets",
+              { "glob": "**/*",
+                "input": "node_modules/monaco-editor/min/vs",
+                "output": "vs"
+              },
+              { "glob": "**/*",
+                "input": "node_modules/monaco-editor/min-maps",
+                "output": "min-maps"
+              }
+            ],
+            "styles": [
+              "projects/ngx-monaco-editor-demo/src/styles.scss"
+            ],
+            "scripts": []
+          },
+          "configurations": {
+            "production": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "500kb",
+                  "maximumError": "1mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "2kb",
+                  "maximumError": "4kb"
+                }
+              ],
+              "outputHashing": "all"
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@angular-devkit/build-angular:dev-server",
+          "configurations": {
+            "production": {
+              "buildTarget": "@jean-merelis/ngx-monaco-editor-demo:build:production"
+            },
+            "development": {
+              "buildTarget": "@jean-merelis/ngx-monaco-editor-demo:build:development"
+            }
+          },
+          "defaultConfiguration": "development"
+        },
+        "extract-i18n": {
+          "builder": "@angular-devkit/build-angular:extract-i18n",
+          "options": {
+            "buildTarget": "@jean-merelis/ngx-monaco-editor-demo:build"
+          }
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "polyfills": [
+              "zone.js",
+              "zone.js/testing"
+            ],
+            "tsConfig": "projects/ngx-monaco-editor-demo/tsconfig.spec.json",
+            "inlineStyleLanguage": "scss",
+            "assets": [
+              "projects/ngx-monaco-editor-demo/src/favicon.ico",
+              "projects/ngx-monaco-editor-demo/src/assets"
+            ],
+            "styles": [
+              "projects/ngx-monaco-editor-demo/src/styles.scss"
+            ],
+            "scripts": []
+          }
+        }
+      }
     }
   }
 }
