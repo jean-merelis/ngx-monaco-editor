@@ -1,27 +1,104 @@
-# NgxMonacoEditor
+# NgxMonacoEditor is a  Monaco Editor Component for Angular.
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 17.3.3.
+Supports all the options available in monaco-editor [Monaco Editor Options](https://microsoft.github.io/monaco-editor/api/index.html)
 
-## Development server
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+Angular 17 => v17.x.x
 
-## Code scaffolding
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+## Setup
 
-## Build
+### Installation
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+Install from npm repository:
+```
+npm install monaco-editor @jean-merelis/ngx-monaco-editor --save
+ ```
 
-## Running unit tests
+#### Provide a `MonacoLoader`
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+You can use `DefaultMonacoLoader` or create your own loader implementing the `MonacoLoader` interface.
 
-## Running end-to-end tests
+`DefaultMonacoLoader` expects Monaco to be in the 'vs' folder of your domain. Ie. `http://localhost:4200/vs/`
+For that add the following snipt in `angular.json`
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+```json
+{
+  "apps": [
+    {
+      "assets": [
+        { "glob": "**/*",
+          "input": "node_modules/monaco-editor/min/vs",
+          "output": "vs"
+        },
+      ],
+    }
+  ],
+}
+ ```
 
-## Further help
+### Sample
+Include NgxMonacoEditorComponent in the `imports` of the component or module where you want to use the editor. (eg: app.module.ts). Add the provide the `MonacoLoader`:
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+```typescript
+import {Component} from '@angular/core';
+import {NgxMonacoEditorComponent, DefaultMonacoLoader, NGX_MONACO_LOADER_PROVIDER} from "@jean-merelis/ngx-monaco-editor";
+
+@Component({
+  selector: 'app-root',
+  standalone: true,
+  templateUrl: './app.component.html',
+  styleUrl: './app.component.scss',
+  imports: [
+    NgxMonacoEditorComponent
+  ],
+  providers: [
+    {provide: NGX_MONACO_LOADER_PROVIDER, useClass: DefaultMonacoLoader}
+  ]
+})
+export class AppComponent {
+  editorOptions = {theme: 'vs-dark', language: 'javascript'};
+  code: string = 'function helloWorld() {\nconsole.log("Hello world!");\n}';
+}
+```
+
+```html
+ <ngx-monaco-editor [options]="editorOptions" [(ngModel)]="code"></ngx-monaco-editor>
+```
+
+
+
+### Events
+Output event (editorInitialized) expose editor instance that can be used for performing custom operations on the editor.
+```html
+<ngx-monaco-editor #editor [options]="editorOptions" [(ngModel)]="code"
+                   (editorInitialized)="editorInitialized($event)"
+                   (focus)="onFocus()"
+                   (blur)="onBlur()"
+></ngx-monaco-editor>
+
+<button type="button" (click)="editor.focus()">Set focus in the editor</button>
+```
+
+```typescript
+export class AppComponent {
+  editorOptions = {theme: 'vs-dark', language: 'javascript'};
+  code: string = 'function helloWorld() {\nconsole.log("Hello world!");\n}';
+  events: string[] = [];
+  
+  editorInitialized(editor) {
+    this.events.push("editorInitialized");
+    let line = editor.getPosition();
+    console.log(line);
+  }
+
+  onFocus() {
+    this.events.push("focus");
+  }
+
+  onBlur() {
+    this.events.push("blur");
+  }
+}
+```
+
