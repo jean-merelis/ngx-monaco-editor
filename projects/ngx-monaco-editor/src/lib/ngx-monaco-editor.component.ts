@@ -200,9 +200,6 @@ export class NgxMonacoEditorComponent implements OnInit, OnChanges, ControlValue
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if ('options' in changes) {
-      this.applyOptions();
-    }
     if ('value' in changes) {
       this.applyValue();
     }
@@ -212,7 +209,9 @@ export class NgxMonacoEditorComponent implements OnInit, OnChanges, ControlValue
     if ('language' in changes) {
       this.applyLanguage();
     }
-
+    if ('options' in changes) {
+      this.applyOptions();
+    }
   }
 
   private applyOptions() {
