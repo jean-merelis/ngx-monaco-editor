@@ -2,8 +2,9 @@
 
 Supports all the options available in monaco-editor [Monaco Editor Options](https://microsoft.github.io/monaco-editor/api/index.html)
 
+We will try to follow the MAJOR.MINOR versions of Angular to make it easier to identify compatibility. That's why our lib started with version 17 and not 1.
 
-Angular 17 => v17.x.x
+Angular 17.3 => v17.3.x
 
 
 ## Setup
@@ -15,7 +16,7 @@ Install from npm repository:
 npm install monaco-editor @jean-merelis/ngx-monaco-editor --save
  ```
 
-#### Provide a `MonacoLoader`
+### Provide a `MonacoLoader`
 
 You can use `DefaultMonacoLoader` or create your own loader implementing the `MonacoLoader` interface. 
 
@@ -42,7 +43,12 @@ Include NgxMonacoEditorComponent in the `imports` of the component or module whe
 
 ```typescript
 import {Component} from '@angular/core';
-import {NgxMonacoEditorComponent, DefaultMonacoLoader, NGX_MONACO_LOADER_PROVIDER} from "@jean-merelis/ngx-monaco-editor";
+import {
+  DefaultMonacoLoader,
+  EditorInitializedEvent,
+  NgxMonacoEditorComponent, 
+  NGX_MONACO_LOADER_PROVIDER
+} from "@jean-merelis/ngx-monaco-editor";
 
 @Component({
   selector: 'app-root',
@@ -69,7 +75,8 @@ export class AppComponent {
 
 
 ### Events
-Output event (editorInitialized) expose editor instance that can be used for performing custom operations on the editor.
+The output event (editorInitialized) emits an EditorInitializedEvent that exposes the editor instance, languages, and worker objects from Monaco API 
+which can be used to perform custom operations in the editor.
 ```html
 <ngx-monaco-editor #editor [options]="editorOptions" [(ngModel)]="code"
                    (editorInitialized)="editorInitialized($event)"
@@ -82,14 +89,20 @@ Output event (editorInitialized) expose editor instance that can be used for per
 
 ```typescript
 export class AppComponent {
-  editorOptions = {theme: 'vs-dark', language: 'javascript'};
-  code: string = 'function helloWorld() {\nconsole.log("Hello world!");\n}';
+  editorOptions = {theme: 'vs-dark', language: 'typescript'};
+  code: string = "const helloWorld = () => 'Hello world';"
   events: string[] = [];
   
-  editorInitialized(editor) {
+  // Object from Monaco API
+  private editor: any;
+  private languages: any;  
+  private worker: any; 
+  
+  editorInitialized(evt: EditorInitializedEvent) {
     this.events.push("editorInitialized");
-    let line = editor.getPosition();
-    console.log(line);
+    this.editor = evt.editor;
+    this.languages = evt.languages;
+    this.worker = evt.worker;
   }
 
   onFocus() {

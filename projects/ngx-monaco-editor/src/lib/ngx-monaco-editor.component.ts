@@ -25,6 +25,15 @@ const noop: any = () => {
   // empty method
 };
 
+/**
+ * Monaco Editor API objects - editor, languages e worker.
+ */
+export interface EditorInitializedEvent {
+  editor: any;
+  languages: any;
+  worker: any;
+}
+
 @Component({
   selector: 'ngx-monaco-editor',
   standalone: true,
@@ -74,7 +83,6 @@ export class NgxMonacoEditorComponent implements OnInit, OnChanges, ControlValue
   readonly value = model<string>('');
 
   /**
-   * options?: object
    * Options used on editor instantiation. Available options listed here:
    * https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.ieditoroptions.html
    */
@@ -90,7 +98,6 @@ export class NgxMonacoEditorComponent implements OnInit, OnChanges, ControlValue
   });
 
   /**
-   * language?: string
    * language used in editor
    * default: typescript
    */
@@ -102,24 +109,21 @@ export class NgxMonacoEditorComponent implements OnInit, OnChanges, ControlValue
   });
 
   /**
-   * theme?: string
    * Theme to be applied to editor
    * default: vs
    */
   readonly theme = model<string>('vs');
 
   /**
-   * fullScreenKeyBinding?: number[]
    * See here for key bindings https://microsoft.github.io/monaco-editor/api/enums/monaco.keycode.html
    * Sets the KeyCode for shortcutting to Fullscreen mode
    */
   readonly fullScreenKeyBinding = input<number[]>();
 
   /**
-   * editorInitialized: function($event)
    * Event emitted when editor is first initialized
    */
-  readonly editorInitialized = output<any>()
+  readonly editorInitialized = output<EditorInitializedEvent>()
   readonly onFocus = output<void>({alias: "focus"});
   readonly onBlur = output<void>({alias: "blur"});
 
@@ -176,11 +180,14 @@ export class NgxMonacoEditorComponent implements OnInit, OnChanges, ControlValue
       this.componentInitialized = true;
 
 
-
       Promise.resolve().then(() => {
         this.applyLanguage();
         this.applyValue();
-        this.editorInitialized.emit(this.editor);
+        this.editorInitialized.emit({
+          editor: this.editor,
+          languages: monaco.languages,
+          worker: monaco.worker
+        });
       });
       this.addFullScreenModeCommand();
       this.resizeObserver = new ResizeObserver(() => {
@@ -194,7 +201,7 @@ export class NgxMonacoEditorComponent implements OnInit, OnChanges, ControlValue
   }
 
   focus(): void {
-    if (this.componentInitialized){
+    if (this.componentInitialized) {
       this.editor.focus();
     }
   }
