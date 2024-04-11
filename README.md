@@ -117,14 +117,12 @@ export class AppComponent {
   
   // Object from Monaco API
   private editor: any;
-  private languages: any;  
-  private worker: any; 
+  private monaco: any;
   
   editorInitialized(evt: EditorInitializedEvent) {
     this.events.push("editorInitialized");
     this.editor = evt.editor;
-    this.languages = evt.languages;
-    this.worker = evt.worker;
+    this.monaco = evt.monaco;
   }
 
   onFocus() {

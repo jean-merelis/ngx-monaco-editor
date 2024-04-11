@@ -18,7 +18,7 @@ npm install monaco-editor @jean-merelis/ngx-monaco-editor --save
 
 ### Provide a `MonacoLoader`
 
-You can use `DefaultMonacoLoader` or create your own loader implementing the `MonacoLoader` interface. 
+You can use `DefaultMonacoLoader` or create your own loader implementing the `MonacoLoader` interface.
 
 `DefaultMonacoLoader` expects Monaco to be in the 'vs' folder of your domain. Ie. `http://localhost:4200/vs/`
 For that add the following snipt in `angular.json`
@@ -97,7 +97,7 @@ export class AppComponent {
 
 
 ### Events
-The output event (editorInitialized) emits an EditorInitializedEvent that exposes the editor instance, languages, and worker objects from Monaco API 
+The output event (editorInitialized) emits an EditorInitializedEvent that exposes the editor instance, languages, and worker objects from Monaco API
 which can be used to perform custom operations in the editor.
 ```html
 <ngx-monaco-editor #editor [options]="editorOptions" [(ngModel)]="code"
@@ -114,17 +114,15 @@ export class AppComponent {
   editorOptions = {theme: 'vs-dark', language: 'typescript'};
   code: string = "const helloWorld = () => 'Hello world';"
   events: string[] = [];
-  
+
   // Object from Monaco API
   private editor: any;
-  private languages: any;  
-  private worker: any; 
-  
+  private monaco: any;
+
   editorInitialized(evt: EditorInitializedEvent) {
     this.events.push("editorInitialized");
     this.editor = evt.editor;
-    this.languages = evt.languages;
-    this.worker = evt.worker;
+    this.monaco = evt.monaco;
   }
 
   onFocus() {
