@@ -1,9 +1,11 @@
 
-<ngx-monaco-editor #editor [options]="{automaticLayout:false,minimap:{enabled:false},lineNumbers:false,contextmenu:false,wordBasedSuggestions:false, wordWrap:'on'}"
-                   [language]="'typescript'"  [(ngModel)]="code" style="height: 64px" theme="vs-dark"
+<ngx-monaco-editor #editor [options]="{automaticLayout:false,minimap:{enabled:false},lineNumbers: 'off',contextmenu: true,wordBasedSuggestions:'currentDocument', wordWrap:'on'}"
+                   [language]="'javascript'"  [(ngModel)]="code"
+                   [theme]="'vs-dark'"
                    (editorInitialized)="editorInitialized($event)"
                    (focus)="onFocus()"
                    (blur)="onBlur()"
+                   style="height: 120px"
 ></ngx-monaco-editor>
 
 

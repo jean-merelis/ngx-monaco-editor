@@ -1,6 +1,6 @@
 {
   "name": "@jean-merelis/ngx-monaco-editor",
-  "version": "17.3.0",
+  "version": "17.3.1",
   "private": false,
   "license": "MIT",
   "description": "Monaco Code Editor for Angular",
@@ -20,6 +20,7 @@
   },
   "author": "Jean Merelis",
   "peerDependencies": {
+    "@angular/cdk": "^17.3.0",
     "@angular/common": "^17.3.0",
     "@angular/core": "^17.3.0",
     "monaco-editor": "^0.47.0"

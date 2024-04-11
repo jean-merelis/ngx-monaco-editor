@@ -50,6 +50,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
+
             "outputPath": "dist/jean-merelis/ngx-monaco-editor-demo",
             "index": "projects/ngx-monaco-editor-demo/src/index.html",
             "browser": "projects/ngx-monaco-editor-demo/src/main.ts",

@@ -1,21 +1,29 @@
 import {InjectionToken} from "@angular/core";
+import {editor, languages} from 'monaco-editor/esm/vs/editor/editor.api';
+
+export interface MonacoAPI {
+  editor: typeof editor,
+  languages: typeof languages;
+}
 
 export interface MonacoLoader {
-  monacoLoaded(): Promise<void>;
+  monacoLoaded(): Promise<MonacoAPI>;
 }
+
 
 export const NGX_MONACO_LOADER_PROVIDER = new InjectionToken<MonacoLoader>("NGX_MONACO_LOADER_PROVIDER");
 
 export class DefaultMonacoLoader implements MonacoLoader {
-  private monacoPromise?: Promise<void>;
+  private monacoPromise?: Promise<MonacoAPI>;
+  private config: any
 
-  constructor(loadOnCreate = true) {
+  constructor(config: any = {paths: {vs: 'vs'}}, loadOnCreate = true) {
     if (loadOnCreate) {
       this.createPromise();
     }
   }
 
-  monacoLoaded(): Promise<void> {
+  monacoLoaded(): Promise<MonacoAPI> {
     if (!this.monacoPromise) {
       this.createPromise();
     }
@@ -23,53 +31,38 @@ export class DefaultMonacoLoader implements MonacoLoader {
   }
 
   private createPromise(): void {
-    this.monacoPromise = new Promise<void>((resolve, reject) => {
+    this.monacoPromise = new Promise<MonacoAPI>((resolve, reject) => {
       if (typeof ((<any>window).monaco) === 'object') {
-        resolve();
+        resolve((<any>window).monaco);
         return
-      }
-
-      const onError = (err: any) => reject(err);
-
-      /*
-       I'm looking for a better solution.
-       I had troubles using require and import()
-      */
-      const loadEditorMain = () => {
-        const editorScript: HTMLScriptElement = document.createElement('script');
-        editorScript.onerror = onError;
-        editorScript.onload = () => {
-          // Necessary to give the script time to execute.
-          this.resolveWhenMonacoIsLoaded(resolve, 20);
-        };
-        editorScript.type = 'text/javascript';
-        editorScript.src = `/vs/editor/editor.main.js`;
-        document.body.appendChild(editorScript);
       }
 
       const loadLoader = () => {
         const loaderScript: HTMLScriptElement = document.createElement('script');
-        loaderScript.onerror = onError;
-        loaderScript.onload = loadEditorMain;
+        loaderScript.onerror = reject;
+        loaderScript.onload = () => {
+          setTimeout(() => {
+            (<any>window).require.config(this.config);
+
+            (<any>window).require(
+              ['vs/editor/editor.main'],
+              function (monaco: MonacoAPI) {
+                resolve(monaco);
+              },
+              function (error: any) {
+                reject(error);
+              },
+            );
+          }, 100);
+
+        };
         loaderScript.type = 'text/javascript';
-        loaderScript.src = `/vs/loader.js`;
+        loaderScript.src =  (this.config?.paths?.vs) ? `${this.config.paths.vs}/loader.js` : `/vs/loader.js`;
         document.body.appendChild(loaderScript);
       };
 
       loadLoader();
     });
   }
-
-  private resolveWhenMonacoIsLoaded(resolve: (value?: (PromiseLike<void> | void )) => void, time: number): void {
-    time = Math.min(1000, time);
-    setTimeout(() => {
-      if (!(<any>window).monaco) {
-        this.resolveWhenMonacoIsLoaded(resolve, time + 20);
-      } else {
-        resolve();
-      }
-    }, time);
-  }
-
 }
 

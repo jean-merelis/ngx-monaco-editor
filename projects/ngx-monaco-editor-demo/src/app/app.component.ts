@@ -1,7 +1,8 @@
 import {Component} from '@angular/core';
-import {RouterOutlet} from '@angular/router';
 import {NgxMonacoEditorComponent, DefaultMonacoLoader, NGX_MONACO_LOADER_PROVIDER} from "@jean-merelis/ngx-monaco-editor";
 import {FormsModule, ReactiveFormsModule} from "@angular/forms";
+
+const monacoLoader = new DefaultMonacoLoader({paths: {vs: 'path/to/vs'}});
 
 @Component({
   selector: 'app-root',
@@ -13,7 +14,7 @@ import {FormsModule, ReactiveFormsModule} from "@angular/forms";
     NgxMonacoEditorComponent
   ],
   providers: [
-    {provide: NGX_MONACO_LOADER_PROVIDER, useClass: DefaultMonacoLoader}
+    {provide: NGX_MONACO_LOADER_PROVIDER, useValue: monacoLoader}
   ]
 })
 export class AppComponent {

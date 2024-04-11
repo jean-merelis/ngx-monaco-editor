@@ -38,6 +38,28 @@ For that add the following snipt in `angular.json`
 }
  ```
 
+You can provide your own configuration for `DefaultMonacoLoader`, but don't forget to change angular.js as well.
+```typescript
+// providing your own configuration
+const monacoLoader = new DefaultMonacoLoader({paths: {vs: 'path/to/vs'}});
+
+@Component({
+  selector: 'app-root',
+  standalone: true,
+  templateUrl: './app.component.html',
+  styleUrl: './app.component.scss',
+  imports: [
+    FormsModule, ReactiveFormsModule,
+    NgxMonacoEditorComponent
+  ],
+  providers: [
+    {provide: NGX_MONACO_LOADER_PROVIDER, useValue: monacoLoader} // <<<
+  ]
+})
+export class AppComponent {}
+```
+
+
 ### Sample
 Include NgxMonacoEditorComponent in the `imports` of the component or module where you want to use the editor. (eg: app.module.ts). Add the provide the `MonacoLoader`:
 
@@ -92,12 +114,12 @@ export class AppComponent {
   editorOptions = {theme: 'vs-dark', language: 'typescript'};
   code: string = "const helloWorld = () => 'Hello world';"
   events: string[] = [];
-
+  
   // Object from Monaco API
   private editor: any;
-  private languages: any;
-  private worker: any;
-
+  private languages: any;  
+  private worker: any; 
+  
   editorInitialized(evt: EditorInitializedEvent) {
     this.events.push("editorInitialized");
     this.editor = evt.editor;

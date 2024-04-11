@@ -11,16 +11,23 @@ import {
   OnChanges,
   OnDestroy,
   OnInit,
-  output, signal,
+  output,
+  signal,
   SimpleChanges,
   viewChild,
   ViewEncapsulation
 } from '@angular/core';
 import {ControlValueAccessor, NG_VALUE_ACCESSOR} from '@angular/forms';
 import {CommonModule, DOCUMENT} from "@angular/common";
-import {NGX_MONACO_LOADER_PROVIDER} from "./monaco-loader";
+import {MonacoAPI, NGX_MONACO_LOADER_PROVIDER} from "./monaco-loader";
 
-declare var monaco: any;
+import {editor as monacoEditor} from 'monaco-editor/esm/vs/editor/editor.api';
+import IStandaloneCodeEditor = monacoEditor.IStandaloneCodeEditor;
+import IStandaloneEditorConstructionOptions = monacoEditor.IStandaloneEditorConstructionOptions;
+
+export type StandaloneCodeEditor = IStandaloneCodeEditor;
+export type StandaloneEditorConstructionOptions = IStandaloneEditorConstructionOptions;
+
 const noop: any = () => {
   // empty method
 };
@@ -29,9 +36,8 @@ const noop: any = () => {
  * Monaco Editor API objects - editor, languages e worker.
  */
 export interface EditorInitializedEvent {
-  editor: any;
-  languages: any;
-  worker: any;
+  editor: StandaloneCodeEditor;
+  monaco: MonacoAPI
 }
 
 @Component({
@@ -41,11 +47,14 @@ export interface EditorInitializedEvent {
     CommonModule,
   ],
   template: `
-    <div class="editorContainer" #editorContainer [ngStyle]="editorStyle()">
+    <div class="ngx-editor-container" #editorContainer [ngStyle]="editorStyle()">
       @if (monacoLoadFailed()) {
         Monaco was not loaded correctly.
       }
     </div>`,
+  host: {
+    "[class.focused]": "focused()"
+  },
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   styles: `
@@ -53,7 +62,7 @@ export interface EditorInitializedEvent {
       display: block;
       position: relative;
 
-      .editorContainer {
+      .ngx-editor-container {
         position: absolute;
         top: 0;
         bottom: 0;
@@ -81,27 +90,13 @@ export class NgxMonacoEditorComponent implements OnInit, OnChanges, ControlValue
 
 
   readonly value = model<string>('');
-
-  /**
-   * Options used on editor instantiation. Available options listed here:
-   * https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.ieditoroptions.html
-   */
-  readonly options = model<any>({
-    automaticLayout: false,
-    minimap: {enabled: false},
-    lineNumbers: false,
-    contextmenu: false,
-    wordBasedSuggestions: false,
-    wordWrap: 'on',
-    language: 'typescript',
-    theme: 'vs'
-  });
+  readonly options = model<StandaloneEditorConstructionOptions>({});
 
   /**
    * language used in editor
    * default: typescript
    */
-  readonly language = model<string>('typescript');
+  readonly language = model<string | undefined>('typescript');
   readonly editorStyle = input<{ [p: string]: any } | null | undefined>({
     width: "100%",
     height: "100%",
@@ -112,13 +107,14 @@ export class NgxMonacoEditorComponent implements OnInit, OnChanges, ControlValue
    * Theme to be applied to editor
    * default: vs
    */
-  readonly theme = model<string>('vs');
+  readonly theme = model<string | undefined>('vs');
 
   /**
    * See here for key bindings https://microsoft.github.io/monaco-editor/api/enums/monaco.keycode.html
    * Sets the KeyCode for shortcutting to Fullscreen mode
    */
   readonly fullScreenKeyBinding = input<number[]>();
+
 
   /**
    * Event emitted when editor is first initialized
@@ -128,6 +124,7 @@ export class NgxMonacoEditorComponent implements OnInit, OnChanges, ControlValue
   readonly onBlur = output<void>({alias: "blur"});
 
   protected readonly editorContainer = viewChild.required<ElementRef<HTMLDivElement>>('editorContainer');
+  protected readonly focused = signal<boolean>(false);
   protected readonly monacoLoadFailed = signal(false);
 
   private readonly zone = inject(NgZone);
@@ -135,18 +132,19 @@ export class NgxMonacoEditorComponent implements OnInit, OnChanges, ControlValue
   private readonly monacoLoader = inject(NGX_MONACO_LOADER_PROVIDER);
   private readonly cd = inject(ChangeDetectorRef);
   private readonly elementRef = inject(ElementRef<HTMLElement>);
-  private editor: any;
-  private componentInitialized = false;
+  private editor?: StandaloneCodeEditor;
   private resizeObserver?: ResizeObserver;
   private propagateChange = noop;
   private onTouched = noop;
+  private _monaco!: MonacoAPI;
 
   ngOnInit(): void {
-    this.monacoLoader.monacoLoaded().then(() => {
+    this.monacoLoader.monacoLoaded().then((m) => {
+      this._monaco = m;
       const containerDiv: HTMLDivElement = this.editorContainer().nativeElement;
 
       this.zone.runOutsideAngular(() => {
-        this.editor = monaco.editor.create(
+        this.editor = this._monaco.editor.create(
           containerDiv,
           Object.assign(
             {},
@@ -158,35 +156,34 @@ export class NgxMonacoEditorComponent implements OnInit, OnChanges, ControlValue
             },
           ));
 
-        this.editor.getModel().onDidChangeContent((e: any) => {
+        this.editor.getModel()?.onDidChangeContent((e: any) => {
           this.zone.run(() => {
-            this.value.set(this.editor.getValue());
+            this.value.set(this.editor!.getValue());
             this.propagateChange(this.value())
           });
         });
 
         this.editor.onDidFocusEditorWidget(() => {
           this.zone.run(() => {
+            this.focused.set(true);
             this.onFocus.emit()
           });
         });
         this.editor.onDidBlurEditorWidget(() => {
           this.zone.run(() => {
+            this.focused.set(false);
             this.onTouched();
             this.onBlur.emit()
           });
         });
       });
-      this.componentInitialized = true;
-
 
       Promise.resolve().then(() => {
         this.applyLanguage();
         this.applyValue();
         this.editorInitialized.emit({
-          editor: this.editor,
-          languages: monaco.languages,
-          worker: monaco.worker
+          editor: this.editor!,
+          monaco: this._monaco
         });
       });
       this.addFullScreenModeCommand();
@@ -201,7 +198,7 @@ export class NgxMonacoEditorComponent implements OnInit, OnChanges, ControlValue
   }
 
   focus(): void {
-    if (this.componentInitialized) {
+    if (this.editor) {
       this.editor.focus();
     }
   }
@@ -222,7 +219,7 @@ export class NgxMonacoEditorComponent implements OnInit, OnChanges, ControlValue
   }
 
   private applyOptions() {
-    if (this.componentInitialized) {
+    if (this.editor) {
       if (this.options().theme) {
         this.theme.set(this.options().theme);
       }
@@ -230,7 +227,7 @@ export class NgxMonacoEditorComponent implements OnInit, OnChanges, ControlValue
         this.language.set(this.options().language);
       }
       if (this.options().value) {
-        this.value.set(this.options().value);
+        this.value.set(this.options().value ?? '');
       }
       this.editor.updateOptions(this.options());
     }
@@ -241,18 +238,18 @@ export class NgxMonacoEditorComponent implements OnInit, OnChanges, ControlValue
       opt.language = this.language();
       return opt;
     });
-    if (this.componentInitialized && this.language()) {
-      monaco.editor.setModelLanguage(this.editor.getModel(), this.language());
+    if (this.editor && this.editor.getModel() && this.language()) {
+      this._monaco.editor.setModelLanguage(this.editor.getModel()!, this.language()!);
     }
   }
 
   private applyValue(): void {
     this.options.update(opt => {
-      opt.value = this.value();
+      opt.value = this.value() ?? '';
       return opt;
     });
-    if (this.componentInitialized) {
-      this.editor.setValue(this.value());
+    if (this.editor) {
+      this.editor.setValue(this.value() ?? '');
     }
   }
 
@@ -261,7 +258,7 @@ export class NgxMonacoEditorComponent implements OnInit, OnChanges, ControlValue
       opt.theme = this.theme();
       return opt;
     });
-    if (this.componentInitialized && this.theme()) {
+    if (this.editor && this.theme()) {
       this.editor.updateOptions({theme: this.theme()});
     }
   }
@@ -287,7 +284,7 @@ export class NgxMonacoEditorComponent implements OnInit, OnChanges, ControlValue
    * layout method that calls layout method of editor and instructs the editor to remeasure its container
    */
   layout(): void {
-    if (this.componentInitialized) {
+    if (this.editor) {
       this.editor.layout();
     }
   }
@@ -300,7 +297,7 @@ export class NgxMonacoEditorComponent implements OnInit, OnChanges, ControlValue
   }
 
   public showFullScreenEditor(): void {
-    if (this.componentInitialized) {
+    if (this.editor) {
       const codeEditorElement: HTMLDivElement = this.editorContainer().nativeElement as HTMLDivElement;
       codeEditorElement.requestFullscreen();
     }
@@ -310,7 +307,7 @@ export class NgxMonacoEditorComponent implements OnInit, OnChanges, ControlValue
    * exitFullScreenEditor request to exit full screen of Code Editor based on its browser type.
    */
   public exitFullScreenEditor(): void {
-    if (this.componentInitialized) {
+    if (this.editor) {
       this.document.exitFullscreen();
     }
   }
@@ -319,7 +316,7 @@ export class NgxMonacoEditorComponent implements OnInit, OnChanges, ControlValue
    * addFullScreenModeCommand used to add the fullscreen option to the context menu
    */
   private addFullScreenModeCommand(): void {
-    this.editor.addAction({
+    this.editor?.addAction({
       // An unique identifier of the contributed action.
       id: 'fullScreen',
       // A label of the action that will be presented to the user.
