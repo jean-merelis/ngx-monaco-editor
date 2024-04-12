@@ -41,7 +41,6 @@ export class DefaultMonacoLoader implements MonacoLoader {
         const loaderScript: HTMLScriptElement = document.createElement('script');
         loaderScript.onerror = reject;
         loaderScript.onload = () => {
-          setTimeout(() => {
             (<any>window).require.config(this.config);
 
             (<any>window).require(
@@ -53,8 +52,6 @@ export class DefaultMonacoLoader implements MonacoLoader {
                 reject(error);
               },
             );
-          }, 100);
-
         };
         loaderScript.type = 'text/javascript';
         loaderScript.src =  (this.config?.paths?.vs) ? `${this.config.paths.vs}/loader.js` : `/vs/loader.js`;

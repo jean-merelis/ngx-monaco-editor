@@ -4,3 +4,4 @@
 
 export * from './lib/monaco-loader';
 export * from './lib/ngx-monaco-editor.component';
+

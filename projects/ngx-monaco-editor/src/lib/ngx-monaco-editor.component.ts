@@ -53,9 +53,10 @@ export interface EditorInitializedEvent {
       }
     </div>`,
   host: {
-    "[class.focused]": "focused()"
+    "[class.focused]": "focused()",
+    "(click)": "focus()"
   },
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  // changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   styles: `
     ngx-monaco-editor {
@@ -72,9 +73,9 @@ export interface EditorInitializedEvent {
 
       /* hide this part of monaco so it doesnt add height  */
 
-      .monaco-aria-container {
-        display: none;
-      }
+      /*.monaco-aria-container {*/
+      /*  display: none;*/
+      /*}*/
     }
   `,
 
@@ -90,13 +91,13 @@ export class NgxMonacoEditorComponent implements OnInit, OnChanges, ControlValue
 
 
   readonly value = model<string>('');
-  readonly options = model<StandaloneEditorConstructionOptions>({});
+  readonly options = input<Omit<StandaloneEditorConstructionOptions, "value" | "language" | "theme">>({});
 
   /**
    * language used in editor
    * default: typescript
    */
-  readonly language = model<string | undefined>('typescript');
+  readonly language = input<string | undefined>('typescript');
   readonly editorStyle = input<{ [p: string]: any } | null | undefined>({
     width: "100%",
     height: "100%",
@@ -107,7 +108,7 @@ export class NgxMonacoEditorComponent implements OnInit, OnChanges, ControlValue
    * Theme to be applied to editor
    * default: vs
    */
-  readonly theme = model<string | undefined>('vs');
+  readonly theme = input<string | undefined>('vs');
 
   /**
    * See here for key bindings https://microsoft.github.io/monaco-editor/api/enums/monaco.keycode.html
@@ -122,6 +123,7 @@ export class NgxMonacoEditorComponent implements OnInit, OnChanges, ControlValue
   readonly editorInitialized = output<EditorInitializedEvent>()
   readonly onFocus = output<void>({alias: "focus"});
   readonly onBlur = output<void>({alias: "blur"});
+  // readonly valueChange = output<string>();
 
   protected readonly editorContainer = viewChild.required<ElementRef<HTMLDivElement>>('editorContainer');
   protected readonly focused = signal<boolean>(false);
@@ -137,6 +139,8 @@ export class NgxMonacoEditorComponent implements OnInit, OnChanges, ControlValue
   private propagateChange = noop;
   private onTouched = noop;
   private _monaco!: MonacoAPI;
+  private changesFromEditor = false;
+  private _value = ""
 
   ngOnInit(): void {
     this.monacoLoader.monacoLoaded().then((m) => {
@@ -150,7 +154,7 @@ export class NgxMonacoEditorComponent implements OnInit, OnChanges, ControlValue
             {},
             this.options(),
             {
-              value: this.value(),
+              value: this._value ?? "",
               language: this.language(),
               theme: this.theme(),
             },
@@ -158,8 +162,12 @@ export class NgxMonacoEditorComponent implements OnInit, OnChanges, ControlValue
 
         this.editor.getModel()?.onDidChangeContent((e: any) => {
           this.zone.run(() => {
-            this.value.set(this.editor!.getValue());
-            this.propagateChange(this.value())
+
+            this.changesFromEditor = true;
+            this._value = this.editor!.getValue();
+            this.applyValue();
+            this.propagateChange(this._value);
+            this.value.set(this._value);
           });
         });
 
@@ -179,7 +187,6 @@ export class NgxMonacoEditorComponent implements OnInit, OnChanges, ControlValue
       });
 
       Promise.resolve().then(() => {
-        this.applyLanguage();
         this.applyValue();
         this.editorInitialized.emit({
           editor: this.editor!,
@@ -204,71 +211,43 @@ export class NgxMonacoEditorComponent implements OnInit, OnChanges, ControlValue
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+
     if ('value' in changes) {
-      this.applyValue();
+      if (this._value !== changes.value.currentValue) {
+        this._value = changes.value.currentValue ?? "";
+        this.applyValue();
+      }
     }
-    if ('theme' in changes) {
-      this.applyTheme();
-    }
-    if ('language' in changes) {
-      this.applyLanguage();
-    }
-    if ('options' in changes) {
-      this.applyOptions();
-    }
-  }
-
-  private applyOptions() {
     if (this.editor) {
-      if (this.options().theme) {
-        this.theme.set(this.options().theme);
+      if ('theme' in changes && changes.theme.currentValue) {
+        this.editor.updateOptions({theme: changes.theme.currentValue});
       }
-      if (this.options().language) {
-        this.language.set(this.options().language);
+      if ('language' in changes && this.editor.getModel() && changes.language.currentValue) {
+        this._monaco.editor.setModelLanguage(this.editor.getModel()!, changes.language.currentValue);
       }
-      if (this.options().value) {
-        this.value.set(this.options().value ?? '');
+      if ('options' in changes) {
+        this.editor.updateOptions(changes.options.currentValue);
       }
-      this.editor.updateOptions(this.options());
     }
-  }
 
-  private applyLanguage(): void {
-    this.options.update(opt => {
-      opt.language = this.language();
-      return opt;
-    });
-    if (this.editor && this.editor.getModel() && this.language()) {
-      this._monaco.editor.setModelLanguage(this.editor.getModel()!, this.language()!);
-    }
   }
 
   private applyValue(): void {
-    this.options.update(opt => {
-      opt.value = this.value() ?? '';
-      return opt;
-    });
-    if (this.editor) {
-      this.editor.setValue(this.value() ?? '');
+    if (this.editor && !this.changesFromEditor) {
+      this.editor.setValue(this._value ?? '');
     }
-  }
-
-  private applyTheme() {
-    this.options.update(opt => {
-      opt.theme = this.theme();
-      return opt;
-    });
-    if (this.editor && this.theme()) {
-      this.editor.updateOptions({theme: this.theme()});
-    }
+    this.changesFromEditor = false;
   }
 
   /**
    * Implemented as part of ControlValueAccessor.
    */
   writeValue(value: any): void {
-    this.value.set(value);
-    this.applyValue();
+    value = value ?? "";
+    if (this._value !== value) {
+      this._value = value;
+      this.applyValue();
+    }
   }
 
   registerOnChange(fn: any): void {

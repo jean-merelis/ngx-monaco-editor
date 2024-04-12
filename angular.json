@@ -31,6 +31,16 @@
             "polyfills": [
               "zone.js",
               "zone.js/testing"
+            ],
+            "assets": [
+              { "glob": "**/*",
+                "input": "node_modules/monaco-editor/min/vs",
+                "output": "vs"
+              },
+              { "glob": "**/*",
+                "input": "node_modules/monaco-editor/min-maps",
+                "output": "min-maps"
+              }
             ]
           }
         }

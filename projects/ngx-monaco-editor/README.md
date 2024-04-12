@@ -135,3 +135,103 @@ export class AppComponent {
 }
 ```
 
+
+## Testing with NgxMonacoEditorHarness 
+
+```typescript
+import { NgxMonacoEditorHarness, MonacoEditorHarnessFilters } from "@jean-merelis/ngx-monaco-editor/testing";
+ ```
+
+Harness for interacting with NgxMonacoEditor in tests.
+
+Configure your test to wait for monacoLoader to complete. See the example below:
+
+```typescript
+
+@Component({
+  selector: 'wrapper',
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    NgxMonacoEditorComponent,
+  ],
+  template: `
+    <ngx-monaco-editor [(value)]="code"
+                       style="height: 120px"
+    ></ngx-monaco-editor>
+
+    <ngx-monaco-editor [(value)]="code2"
+                       style="height: 120px"
+    ></ngx-monaco-editor>
+  `
+})
+export class YourWrapperComponent {
+  code = model("");
+  code2 = model("");
+}
+
+describe("NgxMonacoEditorComponent", () => {
+
+  let fixture: ComponentFixture<YourWrapperComponent>;
+  let loader: HarnessLoader;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [
+        YourWrapperComponent,
+        NgxMonacoEditorComponent
+      ],
+      providers: [
+        {provide: NGX_MONACO_LOADER_PROVIDER, useClass: DefaultMonacoLoader}
+      ]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(YourWrapperComponent);
+    loader = TestbedHarnessEnvironment.loader(fixture);
+    
+    // get MonacoLoader instance and wait to complete.
+    const monacoLoader = TestBed.inject(NGX_MONACO_LOADER_PROVIDER);
+    await monacoLoader.monacoLoaded();
+    fixture.detectChanges();
+    await fixture.whenStable();
+  });
+
+  it("should get NgxMonacoEditorHarness by testid", async () => {
+    const ngxMonaco = await loader.getHarnessOrNull(NgxMonacoEditorHarness.with({testid: "editor-2"}));
+    expect(ngxMonaco).toBeDefined();
+  });
+
+  it("should emit focus event when get focus by click", async () => {
+    const ngxMonaco = await loader.getHarness(NgxMonacoEditorHarness);
+    await ngxMonaco.focus();
+    expect(await ngxMonaco.isFocused()).toBeTrue();
+  });
+
+  it("should emit blur event when lose focus", async () => {
+    fixture.componentInstance.ngxEditor()?.focus()
+    const ngxMonaco = await loader.getHarness(NgxMonacoEditorHarness);
+    expect(await ngxMonaco.isFocused()).toBeTrue();
+
+    await ngxMonaco.blur();
+    expect(await ngxMonaco.isFocused()).toBeFalse();
+  });
+
+  it("should emit value when editor value changes", async () => {
+    const theCode = "const helloWorld = () => 'Hello world';";
+
+    const ngxMonaco = await loader.getHarness(NgxMonacoEditorHarness);
+    await ngxMonaco.sendKeys(theCode);
+    expect(fixture.componentInstance.code()).toBe(theCode);
+  });
+
+  it("should get text from editor", async () => {
+    const theCode = "const helloWorld = () => 'Hello world';";
+    fixture.componentInstance.code.set(theCode)
+    const ngxMonaco = await loader.getHarness(NgxMonacoEditorHarness);
+    expect(await ngxMonaco.getText()).toBe(theCode);
+  });
+});
+
+```
