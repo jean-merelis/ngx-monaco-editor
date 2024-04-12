@@ -162,7 +162,7 @@ Configure your test to wait for monacoLoader to complete. See the example below:
                        style="height: 120px"
     ></ngx-monaco-editor>
 
-    <ngx-monaco-editor [(value)]="code2"
+    <ngx-monaco-editor data-testid="editor-2"  [(value)]="code2"
                        style="height: 120px"
     ></ngx-monaco-editor>
   `
