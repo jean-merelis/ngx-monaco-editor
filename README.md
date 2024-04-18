@@ -56,7 +56,8 @@ const monacoLoader = new DefaultMonacoLoader({paths: {vs: 'path/to/vs'}});
     {provide: NGX_MONACO_LOADER_PROVIDER, useValue: monacoLoader} // <<<
   ]
 })
-export class AppComponent {}
+export class AppComponent {
+}
 ```
 
 
@@ -82,17 +83,18 @@ export interface NgxMonacoEditorConfig {
   ],
   providers: [
     {
-      provide: NGX_MONACO_EDITOR_CONFIG, 
+      provide: NGX_MONACO_EDITOR_CONFIG,
       useValue: {
-        runInsideNgZone: false, 
+        runInsideNgZone: false,
         defautlOptions: {
           minimap: {enabled: true}
-        } 
+        }
       }
     }
   ]
 })
-export class AppComponent {}
+export class AppComponent {
+}
 ```
 
 
@@ -105,7 +107,7 @@ import {Component} from '@angular/core';
 import {
   DefaultMonacoLoader,
   EditorInitializedEvent,
-  NgxMonacoEditorComponent, 
+  NgxMonacoEditorComponent,
   NGX_MONACO_LOADER_PROVIDER
 } from "@jean-merelis/ngx-monaco-editor";
 
@@ -118,7 +120,7 @@ import {
     NgxMonacoEditorComponent
   ],
   providers: [
-    {provide: NGX_MONACO_LOADER_PROVIDER, useClass: DefaultMonacoLoader}
+    {provide: NGX_MONACO_LOADER_PROVIDER, useFactory: () => new DefaultMonacoLoader()}
   ]
 })
 export class AppComponent {
@@ -224,8 +226,8 @@ describe("NgxMonacoEditorComponent", () => {
         NgxMonacoEditorComponent
       ],
       providers: [
-        {provide: NGX_MONACO_LOADER_PROVIDER, useClass: DefaultMonacoLoader},
-        
+        {provide: NGX_MONACO_LOADER_PROVIDER, useFactory: () => new DefaultMonacoLoader()},
+
         // If you need to run your tests with fakeAsync then run inside NgZone
         {provide: NGX_MONACO_EDITOR_CONFIG, useValue: {runInsideNgZone: true}}
       ]
@@ -233,7 +235,7 @@ describe("NgxMonacoEditorComponent", () => {
 
     fixture = TestBed.createComponent(YourWrapperComponent);
     loader = TestbedHarnessEnvironment.loader(fixture);
-    
+
     // get MonacoLoader instance and wait to complete.
     const monacoLoader = TestBed.inject(NGX_MONACO_LOADER_PROVIDER);
     await monacoLoader.monacoLoaded();
@@ -294,7 +296,7 @@ NxMonacoEditorFakeComponent has your own harness, NxMonacoEditorFakeHarness
 
       // >>> this is not necessary for NgxMonacoEditorFakeComponent <<<
       // providers: [
-      //   {provide: NGX_MONACO_LOADER_PROVIDER, useClass: DefaultMonacoLoader}
+      //  {provide: NGX_MONACO_LOADER_PROVIDER, useFactory: () => new DefaultMonacoLoader()}
       // ]
     }).compileComponents();
 

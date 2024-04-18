@@ -3,9 +3,8 @@
   "compileOnSave": false,
   "compilerOptions": {
     "paths": {
-      "@jean-merelis/ngx-monaco-editor": [
-        "./dist/jean-merelis/ngx-monaco-editor"
-      ]
+      "@jean-merelis/ngx-monaco-editor/*": ["./projects/ngx-monaco-editor/*"],
+      "@jean-merelis/ngx-monaco-editor": ["./projects/ngx-monaco-editor"],
     },
     "outDir": "./dist/out-tsc",
     "strict": true,

@@ -1,8 +1,11 @@
 import {ChangeDetectorRef, Component, model} from '@angular/core';
-import {NgxMonacoEditorComponent, DefaultMonacoLoader, NGX_MONACO_LOADER_PROVIDER} from "@jean-merelis/ngx-monaco-editor";
+import {
+  DefaultMonacoLoader,
+  NGX_MONACO_LOADER_PROVIDER,
+  NgxMonacoEditorComponent
+} from "@jean-merelis/ngx-monaco-editor";
 import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 
-const monacoLoader = new DefaultMonacoLoader({paths: {vs: 'path/to/vs'}});
 
 @Component({
   selector: 'app-root',
@@ -14,38 +17,25 @@ const monacoLoader = new DefaultMonacoLoader({paths: {vs: 'path/to/vs'}});
     NgxMonacoEditorComponent
   ],
   providers: [
-    {provide: NGX_MONACO_LOADER_PROVIDER, useValue: monacoLoader}
+    {provide: NGX_MONACO_LOADER_PROVIDER, useFactory: () => new DefaultMonacoLoader()}
   ]
 })
 export class AppComponent {
-   // code: string = "const helloWorld = () => 'Hello world';"
-   code= model("const helloWorld = () => 'Hello world';");
-   events: string[] = [];
+  code = model("const helloWorld = () => 'Hello world';");
+  events: string[] = [];
 
-   constructor(private cd: ChangeDetectorRef) {
-   }
+  constructor(private cd: ChangeDetectorRef) {
+  }
 
-  editorInitialized(editor: any){
+  editorInitialized(editor: any) {
     this.events.push("editorInitialized");
   }
 
-  onFocus(){
+  onFocus() {
     this.events.push("focus");
   }
 
-  onBlur(){
+  onBlur() {
     this.events.push("blur");
-  }
-
-  query: string = '';
-
-
-  test(): void {
-    // const elem = document.querySelector(this.query) as HTMLElement;
-    // elem.focus();
-
-    // this.code ="xpto";
-    this.code.set(this.query);
-    this.cd.markForCheck();
   }
 }
