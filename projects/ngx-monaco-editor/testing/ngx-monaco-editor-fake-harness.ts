@@ -1,20 +1,18 @@
 import {BaseHarnessFilters, ComponentHarness, HarnessPredicate, TestKey} from "@angular/cdk/testing"
 
-export interface MonacoEditorHarnessFilters extends BaseHarnessFilters {
+export interface MonacoEditorFakeHarnessFilters extends BaseHarnessFilters {
   testid?: string | RegExp;
 }
 
-export class NgxMonacoEditorHarness extends ComponentHarness {
+export class NgxMonacoEditorFakeHarness extends ComponentHarness {
   static hostSelector = 'ngx-monaco-editor';
 
-  static with(options: MonacoEditorHarnessFilters): HarnessPredicate<NgxMonacoEditorHarness> {
-    return new HarnessPredicate(NgxMonacoEditorHarness, options)
+  static with(options: MonacoEditorFakeHarnessFilters): HarnessPredicate<NgxMonacoEditorFakeHarness> {
+    return new HarnessPredicate(NgxMonacoEditorFakeHarness, options)
       .addOption('testid', options.testid,
         (harness, text) => HarnessPredicate.stringMatches(harness.getTestid(), text));
   }
 
-
-  private getMonacoEditorElement = this.locatorFor('.monaco-editor');
   private getMonacoInputAreaElement = this.locatorFor('textarea');
 
   async getTestid(): Promise<string | null> {
@@ -34,7 +32,7 @@ export class NgxMonacoEditorHarness extends ComponentHarness {
   }
 
   async isFocused(): Promise<boolean> {
-    return (await this.getMonacoEditorElement()).hasClass("focused");
+    return (await this.getMonacoInputAreaElement()).isFocused();
   }
 
   async getText(): Promise<string> {
@@ -44,8 +42,7 @@ export class NgxMonacoEditorHarness extends ComponentHarness {
   async setValue(value: string): Promise<void> {
     const elem = await this.getMonacoInputAreaElement();
     await elem.focus();
-    await elem.setInputValue(value);
-    await elem.sendKeys(' ', TestKey.BACKSPACE); // to notify changes
+    await elem.sendKeys(value);
   }
 
 }

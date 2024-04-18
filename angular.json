@@ -6,7 +6,7 @@
     "@jean-merelis/ngx-monaco-editor": {
       "projectType": "library",
       "root": "projects/ngx-monaco-editor",
-      "sourceRoot": "projects/ngx-monaco-editor/src",
+      "sourceRoot": "projects/ngx-monaco-editor",
       "prefix": "lib",
       "architect": {
         "build": {

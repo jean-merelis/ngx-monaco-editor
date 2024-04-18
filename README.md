@@ -162,7 +162,7 @@ Configure your test to wait for monacoLoader to complete. See the example below:
                        style="height: 120px"
     ></ngx-monaco-editor>
 
-    <ngx-monaco-editor data-testid="editor-2"  [(value)]="code2"
+    <ngx-monaco-editor [(value)]="code2"
                        style="height: 120px"
     ></ngx-monaco-editor>
   `
@@ -195,7 +195,6 @@ describe("NgxMonacoEditorComponent", () => {
     const monacoLoader = TestBed.inject(NGX_MONACO_LOADER_PROVIDER);
     await monacoLoader.monacoLoaded();
     fixture.detectChanges();
-    await fixture.whenStable();
   });
 
   it("should get NgxMonacoEditorHarness by testid", async () => {
@@ -222,7 +221,7 @@ describe("NgxMonacoEditorComponent", () => {
     const theCode = "const helloWorld = () => 'Hello world';";
 
     const ngxMonaco = await loader.getHarness(NgxMonacoEditorHarness);
-    await ngxMonaco.sendKeys(theCode);
+    await ngxMonaco.setVale(theCode);
     expect(fixture.componentInstance.code()).toBe(theCode);
   });
 
@@ -234,4 +233,35 @@ describe("NgxMonacoEditorComponent", () => {
   });
 });
 
+```
+
+#### Alternative
+You can also use the NxMonacoEditorFakeComponent in your tests. This component does not create a real Monaco editor.
+For that, configure the NxMonacoEditorFakeComponent in TestBed, instead NxMonacoEditorComponent.
+
+NxMonacoEditorFakeComponent has your own harness, NxMonacoEditorFakeHarness
+
+```typescript
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [
+        YourWrapperComponent,
+        NgxMonacoEditorFakeComponent
+      ],
+
+      // >>> this is not necessary for NgxMonacoEditorFakeComponent <<<
+      // providers: [
+      //   {provide: NGX_MONACO_LOADER_PROVIDER, useClass: DefaultMonacoLoader}
+      // ]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(YourWrapperComponent);
+    loader = TestbedHarnessEnvironment.loader(fixture);
+    
+    // >>> this is not necessary for NgxMonacoEditorFakeComponent <<<
+    // const monacoLoader = TestBed.inject(NGX_MONACO_LOADER_PROVIDER);
+    // await monacoLoader.monacoLoaded();
+
+    fixture.detectChanges();
+  });
 ```

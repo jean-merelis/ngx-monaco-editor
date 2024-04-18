@@ -58,7 +58,7 @@ export class WrapperComponent {
   }
 }
 
-describe("NgxMonacoEditorComponent", () => {
+describe("NgxMonacoEditorComponent Spec", () => {
 
   let fixture: ComponentFixture<WrapperComponent>;
   let loader: HarnessLoader;
@@ -109,20 +109,17 @@ describe("NgxMonacoEditorComponent", () => {
   });
 
   it("should send keys", async () => {
-    const theCode = "const helloWorld = () => 'Hello world';" +
-      "const helloWorld = () => 'Hello world';\nconst helloWorld = () => 'Hello world';\nconst helloWorld = () => 'Hello world';\nconst helloWorld = () => 'Hello world';\nconst helloWorld = () => 'Hello world';\nconst helloWorld = () => 'Hello world';\n" +
-      "const helloWorld = () => 'Hello world';\nconst helloWorld = () => 'Hello world';\nconst helloWorld = () => 'Hello world';\nconst helloWorld = () => 'Hello world';\n" +
-      "\nconst helloWorld = () => 'Hello world';\nconst helloWorld = () => 'Hello world';\nconst helloWorld = () => 'Hello world';\nconst helloWorld = () => 'Hello world';\nconst helloWorld = () => 'Hello world';\n";
+    const theCode = `$max(12, 20, 1) + $min(1110, 2, 4) + $avg(324, 32, 342)`;
 
     const ngxMonaco = await loader.getHarness(NgxMonacoEditorHarness);
-    await ngxMonaco.sendKeys(theCode);
+    await ngxMonaco.setValue(theCode);
     expect(fixture.componentInstance.code()).toBe(theCode);
   });
 
   it("should get text", async () => {
     const theCode = "const helloWorld = () => 'Hello world';";
     const ngxMonaco = await loader.getHarness(NgxMonacoEditorHarness);
-    await ngxMonaco.sendKeys(theCode);
+    await ngxMonaco.setValue(theCode);
     expect(await ngxMonaco.getText()).toBe(theCode);
   });
 });

@@ -1,6 +1,6 @@
 {
   "name": "ngx-monaco-editor",
-  "version": "17.3.2",
+  "version": "17.3.3",
   "license": "MIT",
   "scripts": {
     "ng": "ng",
