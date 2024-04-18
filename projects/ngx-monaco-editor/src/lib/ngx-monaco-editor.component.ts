@@ -4,7 +4,8 @@ import {
   Component,
   ElementRef,
   forwardRef,
-  inject, InjectionToken,
+  inject,
+  InjectionToken,
   input,
   model,
   NgZone,
@@ -19,7 +20,7 @@ import {
 } from '@angular/core';
 import {ControlValueAccessor, NG_VALUE_ACCESSOR} from '@angular/forms';
 import {DOCUMENT, NgClass, NgStyle} from "@angular/common";
-import {MonacoAPI, MonacoLoader, NGX_MONACO_LOADER_PROVIDER} from "./monaco-loader";
+import {MonacoAPI, NGX_MONACO_LOADER_PROVIDER} from "./monaco-loader";
 import {editor as monacoEditor} from 'monaco-editor/esm/vs/editor/editor.api';
 import IStandaloneCodeEditor = monacoEditor.IStandaloneCodeEditor;
 import IStandaloneEditorConstructionOptions = monacoEditor.IStandaloneEditorConstructionOptions;
@@ -44,7 +45,7 @@ export interface NgxMonacoEditorConfig {
   runInsideNgZone?: boolean
 }
 
-export const NGX_MONACO_CONFIG = new InjectionToken<NgxMonacoEditorConfig>("NGX_MONACO_CONFIG");
+export const NGX_MONACO_EDITOR_CONFIG = new InjectionToken<NgxMonacoEditorConfig>("NGX_MONACO_EDITOR_CONFIG");
 
 @Component({
   selector: 'ngx-monaco-editor',
@@ -131,7 +132,7 @@ export class NgxMonacoEditorComponent implements OnInit, OnChanges, ControlValue
   private readonly monacoLoader = inject(NGX_MONACO_LOADER_PROVIDER);
   private readonly cd = inject(ChangeDetectorRef);
   private readonly elementRef = inject(ElementRef<HTMLElement>);
-  private readonly config = inject(NGX_MONACO_CONFIG, {optional: true})
+  private readonly config = inject(NGX_MONACO_EDITOR_CONFIG, {optional: true})
   private editor?: StandaloneCodeEditor;
   private resizeObserver?: ResizeObserver;
   private propagateChange = noop;
@@ -147,7 +148,7 @@ export class NgxMonacoEditorComponent implements OnInit, OnChanges, ControlValue
 
       const options = Object.assign(
         {},
-        (this.config?.defautlOptions) ?? {},
+        this.deepCopyOrEmpty(this.config?.defautlOptions),
         this.options(),
         {
           value: this._value ?? "",
@@ -205,8 +206,6 @@ export class NgxMonacoEditorComponent implements OnInit, OnChanges, ControlValue
           });
         });
       }
-
-
       Promise.resolve().then(() => {
         this.applyValue();
         this.editorInitialized.emit({
@@ -249,7 +248,13 @@ export class NgxMonacoEditorComponent implements OnInit, OnChanges, ControlValue
         this.editor.updateOptions(changes.options.currentValue);
       }
     }
+  }
 
+  private deepCopyOrEmpty(obj: StandaloneEditorConstructionOptions | undefined): StandaloneEditorConstructionOptions {
+    if (!obj) {
+      return {};
+    }
+    return JSON.parse(JSON.stringify(obj));
   }
 
   private applyValue(): void {

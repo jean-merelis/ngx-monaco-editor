@@ -60,6 +60,43 @@ export class AppComponent {}
 ```
 
 
+### Global Editor configuration
+You can provide a global configuration for yours editors.
+
+````typescript
+export interface NgxMonacoEditorConfig {
+  defautlOptions?: StandaloneEditorConstructionOptions;
+  runInsideNgZone?: boolean
+}
+````
+
+```typescript
+
+@Component({
+  selector: 'app-root',
+  standalone: true,
+  templateUrl: './app.component.html',
+  styleUrl: './app.component.scss',
+  imports: [
+    NgxMonacoEditorComponent
+  ],
+  providers: [
+    {
+      provide: NGX_MONACO_EDITOR_CONFIG, 
+      useValue: {
+        runInsideNgZone: false, 
+        defautlOptions: {
+          minimap: {enabled: true}
+        } 
+      }
+    }
+  ]
+})
+export class AppComponent {}
+```
+
+
+
 ### Sample
 Include NgxMonacoEditorComponent in the `imports` of the component or module where you want to use the editor. (eg: app.module.ts). Add the provide the `MonacoLoader`:
 
@@ -144,6 +181,9 @@ import { NgxMonacoEditorHarness, MonacoEditorHarnessFilters } from "@jean-mereli
 
 Harness for interacting with NgxMonacoEditor in tests.
 
+You may want to run your tests with fakeAsync, so you need to configure to run Monaco Editor inside NgZone.
+Then, in the last line of the test, call the `discardPeriodicTasks()` function 
+
 Configure your test to wait for monacoLoader to complete. See the example below:
 
 ```typescript
@@ -184,7 +224,10 @@ describe("NgxMonacoEditorComponent", () => {
         NgxMonacoEditorComponent
       ],
       providers: [
-        {provide: NGX_MONACO_LOADER_PROVIDER, useClass: DefaultMonacoLoader}
+        {provide: NGX_MONACO_LOADER_PROVIDER, useClass: DefaultMonacoLoader},
+        
+        // If you need to run your tests with fakeAsync then run inside NgZone
+        {provide: NGX_MONACO_EDITOR_CONFIG, useValue: {runInsideNgZone: true}}
       ]
     }).compileComponents();
 
@@ -221,7 +264,7 @@ describe("NgxMonacoEditorComponent", () => {
     const theCode = "const helloWorld = () => 'Hello world';";
 
     const ngxMonaco = await loader.getHarness(NgxMonacoEditorHarness);
-    await ngxMonaco.setVale(theCode);
+    await ngxMonaco.setValue(theCode);
     expect(fixture.componentInstance.code()).toBe(theCode);
   });
 
