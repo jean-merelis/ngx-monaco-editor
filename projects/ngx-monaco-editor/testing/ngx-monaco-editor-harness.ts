@@ -15,14 +15,14 @@ export class NgxMonacoEditorHarness extends ComponentHarness {
 
 
   private getMonacoEditorElement = this.locatorFor('.monaco-editor');
-  private getMonacoInputAreaElement = this.locatorFor('.inputarea');
+  private getMonacoInputAreaElement = this.locatorFor('textarea');
 
   async getTestid(): Promise<string | null> {
     return (await this.host()).getAttribute("data-testid");
   }
 
   async click(): Promise<void> {
-    return (await this.host()).click();
+    return (await this.getMonacoInputAreaElement()).click();
   }
 
   async focus(): Promise<void> {
@@ -41,6 +41,14 @@ export class NgxMonacoEditorHarness extends ComponentHarness {
     return (await this.getMonacoInputAreaElement()).getProperty('value');
   }
 
+  async setValue(): Promise<void> {
+    const elem = await this.getMonacoInputAreaElement();
+    await elem.focus();
+    await elem.setInputValue(value);
+    await elem.sendKeys(' ', TestKey.BACKSPACE);
+  }
+
+  /** @deprecated */
   async sendKeys(...keys: (string | TestKey)[]): Promise<void> {
     const elem = await this.getMonacoInputAreaElement();
     await elem.focus();
