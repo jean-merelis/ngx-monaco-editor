@@ -1,6 +1,6 @@
 # NgxMonacoEditor is a  Monaco Editor Component for Angular.
 
-Supports all the options available in monaco-editor [Monaco Editor Options](https://microsoft.github.io/monaco-editor/api/index.html)
+Supports all the options available in monaco-editor [Monaco Editor Options]([https://microsoft.github.io/monaco-editor/api/index.html](https://microsoft.github.io/monaco-editor/typedoc/variables/editor.EditorOptions.html))
 
 We will try to follow the MAJOR.MINOR versions of Angular to make it easier to identify compatibility. That's why our lib started with version 17 and not 1.
 
