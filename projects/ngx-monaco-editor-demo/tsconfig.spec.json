@@ -2,10 +2,6 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "paths": {
-      "@jean-merelis/ngx-monaco-editor/*": ["../../projects/ngx-monaco-editor/*"],
-      "@jean-merelis/ngx-monaco-editor": ["../../projects/ngx-monaco-editor"]
-    },
     "outDir": "../../out-tsc/spec",
     "types": [
       "jasmine"
