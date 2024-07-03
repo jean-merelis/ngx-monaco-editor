@@ -5,6 +5,7 @@ Supports all the options available in monaco-editor [Monaco Editor Options](http
 We will try to follow the MAJOR.MINOR versions of Angular to make it easier to identify compatibility. That's why our lib started with version 17 and not 1.
 
 Angular 17.3 => v17.3.x
+Angular 18 => v18.x.x
 
 
 ## Setup
