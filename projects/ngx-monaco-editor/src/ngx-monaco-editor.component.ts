@@ -19,7 +19,7 @@ import {
   ViewEncapsulation
 } from '@angular/core';
 import {ControlValueAccessor, NG_VALUE_ACCESSOR} from '@angular/forms';
-import {DOCUMENT, NgClass, NgStyle} from "@angular/common";
+import {DOCUMENT, NgStyle} from "@angular/common";
 import {MonacoAPI, NGX_MONACO_LOADER_PROVIDER} from "./monaco-loader";
 import {editor as monacoEditor} from 'monaco-editor/esm/vs/editor/editor.api';
 import IStandaloneCodeEditor = monacoEditor.IStandaloneCodeEditor;
@@ -49,9 +49,7 @@ export const NGX_MONACO_EDITOR_CONFIG = new InjectionToken<NgxMonacoEditorConfig
 
 @Component({
   selector: 'ngx-monaco-editor',
-  standalone: true,
   imports: [
-    NgClass,
     NgStyle,
   ],
   template: `
@@ -80,14 +78,13 @@ export const NGX_MONACO_EDITOR_CONFIG = new InjectionToken<NgxMonacoEditorConfig
       }
     }
   `,
-
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
       useExisting: forwardRef(() => NgxMonacoEditorComponent),
       multi: true,
     },
-  ],
+  ]
 })
 export class NgxMonacoEditorComponent implements OnInit, OnChanges, ControlValueAccessor, OnDestroy {
 

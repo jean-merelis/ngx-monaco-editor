@@ -8,17 +8,16 @@ import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 
 
 @Component({
-  selector: 'app-root',
-  standalone: true,
-  templateUrl: './app.component.html',
-  styleUrl: './app.component.scss',
-  imports: [
-    FormsModule, ReactiveFormsModule,
-    NgxMonacoEditorComponent
-  ],
-  providers: [
-    {provide: NGX_MONACO_LOADER_PROVIDER, useFactory: () => new DefaultMonacoLoader()}
-  ]
+    selector: 'app-root',
+    templateUrl: './app.component.html',
+    styleUrl: './app.component.scss',
+    imports: [
+        FormsModule, ReactiveFormsModule,
+        NgxMonacoEditorComponent
+    ],
+    providers: [
+        { provide: NGX_MONACO_LOADER_PROVIDER, useFactory: () => new DefaultMonacoLoader() }
+    ]
 })
 export class AppComponent {
   code = model("const helloWorld = () => 'Hello world';");

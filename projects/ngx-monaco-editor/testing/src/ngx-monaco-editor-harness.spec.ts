@@ -10,15 +10,14 @@ import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 
 
 @Component({
-  selector: 'wrapper',
-  standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    ReactiveFormsModule,
-    NgxMonacoEditorComponent,
-  ],
-  template: `
+    selector: 'wrapper',
+    imports: [
+        CommonModule,
+        FormsModule,
+        ReactiveFormsModule,
+        NgxMonacoEditorComponent,
+    ],
+    template: `
     <ngx-monaco-editor #ngx1 data-testid="editor-1"
                        [(value)]="code"
                        [language]="'typescript'"

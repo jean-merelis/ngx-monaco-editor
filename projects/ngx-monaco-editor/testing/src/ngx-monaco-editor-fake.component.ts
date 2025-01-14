@@ -39,28 +39,27 @@ export interface EditorInitializedEvent {
 }
 
 @Component({
-  selector: 'ngx-monaco-editor',
-  standalone: true,
-  imports: [
-    CommonModule,
-    NgClass,
-    NgStyle,
-    FormsModule,
-  ],
-  template: `
+    selector: 'ngx-monaco-editor',
+    imports: [
+        CommonModule,
+        NgClass,
+        NgStyle,
+        FormsModule,
+    ],
+    template: `
     <div class="ngx-editor-container" #editorContainer [ngStyle]="editorStyle()">
       <textarea #editor [ngModel]="value()" (ngModelChange)="setValue($event)"
                 (focus)="changedFocus(true)"
                 (blur)="changedFocus(false)">
       </textarea>
     </div>`,
-  host: {
-    "[class.focused]": "focused()",
-    "(click)": "focus()"
-  },
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  encapsulation: ViewEncapsulation.None,
-  styles: `
+    host: {
+        "[class.focused]": "focused()",
+        "(click)": "focus()"
+    },
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    encapsulation: ViewEncapsulation.None,
+    styles: `
     ngx-monaco-editor {
       display: block;
       position: relative;
@@ -79,14 +78,13 @@ export interface EditorInitializedEvent {
       }
     }
   `,
-
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => NgxMonacoEditorFakeComponent),
-      multi: true,
-    },
-  ],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => NgxMonacoEditorFakeComponent),
+            multi: true,
+        },
+    ]
 })
 export class NgxMonacoEditorFakeComponent implements OnInit, OnChanges, ControlValueAccessor, OnDestroy {
 

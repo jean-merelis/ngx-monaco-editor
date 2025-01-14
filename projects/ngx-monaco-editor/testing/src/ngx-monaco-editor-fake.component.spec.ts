@@ -15,16 +15,15 @@ import {NgxMonacoEditorFakeHarness} from "./ngx-monaco-editor-fake-harness";
 
 
 @Component({
-  selector: 'wrapper',
-  standalone: true,
-  imports: [
-    NgClass,
-    NgStyle,
-    FormsModule,
-    ReactiveFormsModule,
-    NgxMonacoEditorFakeComponent,
-  ],
-  template: `
+    selector: 'wrapper',
+    imports: [
+        NgClass,
+        NgStyle,
+        FormsModule,
+        ReactiveFormsModule,
+        NgxMonacoEditorFakeComponent,
+    ],
+    template: `
     <ngx-monaco-editor [(value)]="code"
                        [language]="'typescript'"
                        [options]="{automaticLayout:false,minimap:{enabled:false},lineNumbers: 'off',contextmenu: true,wordBasedSuggestions:'currentDocument', wordWrap:'on'}"

@@ -10,15 +10,14 @@ import {NgxMonacoEditorHarness} from "../testing/src";
 
 
 @Component({
-  selector: 'wrapper',
-  standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    ReactiveFormsModule,
-    NgxMonacoEditorComponent,
-  ],
-  template: `
+    selector: 'wrapper',
+    imports: [
+        CommonModule,
+        FormsModule,
+        ReactiveFormsModule,
+        NgxMonacoEditorComponent,
+    ],
+    template: `
     <ngx-monaco-editor [(value)]="code"
                        [language]="'typescript'"
                        [options]="{automaticLayout:false,minimap:{enabled:false},lineNumbers: 'off',contextmenu: true,wordBasedSuggestions:'currentDocument', wordWrap:'on'}"
