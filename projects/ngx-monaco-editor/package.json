@@ -1,6 +1,6 @@
 {
   "name": "@jean-merelis/ngx-monaco-editor",
-  "version": "18.0.1",
+  "version": "19.0.0",
   "private": false,
   "license": "MIT",
   "description": "Monaco Code Editor for Angular",
@@ -20,9 +20,9 @@
   },
   "author": "Jean Merelis",
   "peerDependencies": {
-    "@angular/cdk": "^18.0.0",
-    "@angular/common": "^18.0.0",
-    "@angular/core": "^18.0.0",
+    "@angular/cdk": ">=18.0.0",
+    "@angular/common": ">=18.0.0",
+    "@angular/core": ">=18.0.0",
     "monaco-editor": "^0.47.0"
   },
   "devDependencies": {

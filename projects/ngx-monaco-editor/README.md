@@ -6,6 +6,7 @@ We will try to follow the MAJOR.MINOR versions of Angular to make it easier to i
 
 Angular 17.3 => v17.3.x
 Angular 18 => v18.x.x
+Angular 19 => v19.x.x
 
 
 ## Setup
