@@ -4,7 +4,7 @@ import {
   Component,
   ElementRef,
   forwardRef,
-  inject,
+  inject, InjectionToken,
   input,
   model,
   NgZone,
@@ -18,8 +18,9 @@ import {
   ViewEncapsulation
 } from '@angular/core';
 import {ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR} from '@angular/forms';
-import {CommonModule, DOCUMENT, NgClass, NgStyle} from "@angular/common";
+import {CommonModule, DOCUMENT, NgStyle} from "@angular/common";
 import {editor as monacoEditor} from 'monaco-editor/esm/vs/editor/editor.api';
+import {NGX_MONACO_LOADER_PROVIDER, NgxMonacoEditorComponent} from "@jean-merelis/ngx-monaco-editor";
 import IStandaloneCodeEditor = monacoEditor.IStandaloneCodeEditor;
 import IStandaloneEditorConstructionOptions = monacoEditor.IStandaloneEditorConstructionOptions;
 
@@ -38,28 +39,49 @@ export interface EditorInitializedEvent {
   monaco: any
 }
 
+export interface MockMonacoEditorConfig {
+  initializedEvent: EditorInitializedEvent
+}
+
+export const MOCK_MONACO_EDITOR_CONFIG = new InjectionToken<MockMonacoEditorConfig>("MOCK_MONACO_EDITOR_CONFIG",
+  {
+    factory: () => ({initializedEvent: {editor: {} as any, monaco: {} as any}})
+  }
+);
+
+export function provideMockMonacoEditor(config: MockMonacoEditorConfig = {
+  initializedEvent: {
+    editor: {} as any,
+    monaco: {} as any
+  }
+}) {
+  return {
+    provide: MOCK_MONACO_EDITOR_CONFIG,
+    useValue: config
+  };
+}
+
 @Component({
-    selector: 'ngx-monaco-editor',
-    imports: [
-        CommonModule,
-        NgClass,
-        NgStyle,
-        FormsModule,
-    ],
-    template: `
+  selector: 'ngx-monaco-editor',
+  imports: [
+    CommonModule,
+    NgStyle,
+    FormsModule,
+  ],
+  template: `
     <div class="ngx-editor-container" #editorContainer [ngStyle]="editorStyle()">
       <textarea #editor [ngModel]="value()" (ngModelChange)="setValue($event)"
                 (focus)="changedFocus(true)"
                 (blur)="changedFocus(false)">
       </textarea>
     </div>`,
-    host: {
-        "[class.focused]": "focused()",
-        "(click)": "focus()"
-    },
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    encapsulation: ViewEncapsulation.None,
-    styles: `
+  host: {
+    "[class.focused]": "focused()",
+    "(click)": "focus()"
+  },
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  encapsulation: ViewEncapsulation.None,
+  styles: `
     ngx-monaco-editor {
       display: block;
       position: relative;
@@ -78,13 +100,17 @@ export interface EditorInitializedEvent {
       }
     }
   `,
-    providers: [
-        {
-            provide: NG_VALUE_ACCESSOR,
-            useExisting: forwardRef(() => NgxMonacoEditorFakeComponent),
-            multi: true,
-        },
-    ]
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => NgxMonacoEditorFakeComponent),
+      multi: true,
+    },
+    {provide: NgxMonacoEditorComponent, useExisting: NgxMonacoEditorFakeComponent}
+  ],
+  viewProviders: [
+    {provide: NgxMonacoEditorComponent, useExisting: NgxMonacoEditorFakeComponent}
+  ]
 })
 export class NgxMonacoEditorFakeComponent implements OnInit, OnChanges, ControlValueAccessor, OnDestroy {
 
@@ -111,20 +137,14 @@ export class NgxMonacoEditorFakeComponent implements OnInit, OnChanges, ControlV
   protected readonly editorContainer = viewChild.required<ElementRef<HTMLDivElement>>('editorContainer');
   protected readonly focused = signal<boolean>(false);
 
-  private readonly zone = inject(NgZone);
   private readonly document = inject(DOCUMENT);
-  private readonly cd = inject(ChangeDetectorRef);
-  private readonly elementRef = inject(ElementRef<HTMLElement>);
   private editor = viewChild<ElementRef<HTMLTextAreaElement>>('editor');
   private propagateChange = noop;
   private onTouched = noop;
+  private mockConfig = inject(MOCK_MONACO_EDITOR_CONFIG);
 
   ngOnInit(): void {
-    this.editorInitialized.emit({
-      // TODO: inject mock by provider config
-      editor: {} as any,
-      monaco: {} as any
-    })
+    this.editorInitialized.emit(this.mockConfig.initializedEvent);
   }
 
   focus(): void {

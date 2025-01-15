@@ -7,23 +7,24 @@ import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 
 import {
   EditorInitializedEvent,
+  MockMonacoEditorConfig,
   NgxMonacoEditorFakeComponent,
+  provideMockMonacoEditor,
   StandaloneCodeEditor
 } from "./ngx-monaco-editor-fake.component";
 import {MonacoAPI} from "../../src/monaco-loader";
 import {NgxMonacoEditorFakeHarness} from "./ngx-monaco-editor-fake-harness";
+import {NgxMonacoEditorComponent} from "@jean-merelis/ngx-monaco-editor";
 
 
 @Component({
-    selector: 'wrapper',
-    imports: [
-        NgClass,
-        NgStyle,
-        FormsModule,
-        ReactiveFormsModule,
-        NgxMonacoEditorFakeComponent,
-    ],
-    template: `
+  selector: 'wrapper',
+  imports: [
+    FormsModule,
+    ReactiveFormsModule,
+    NgxMonacoEditorFakeComponent,
+  ],
+  template: `
     <ngx-monaco-editor [(value)]="code"
                        [language]="'typescript'"
                        [options]="{automaticLayout:false,minimap:{enabled:false},lineNumbers: 'off',contextmenu: true,wordBasedSuggestions:'currentDocument', wordWrap:'on'}"
@@ -41,7 +42,7 @@ export class WrapperComponent {
   events: string[] = [];
   editor?: StandaloneCodeEditor;
   monaco?: MonacoAPI;
-  ngxEditor = viewChild(NgxMonacoEditorFakeComponent);
+  ngxEditor = viewChild.required(NgxMonacoEditorComponent);
 
   editorInitialized(event: EditorInitializedEvent) {
     this.events.push("editorInitialized");
@@ -60,10 +61,91 @@ export class WrapperComponent {
 
 describe("NgxMonacoEditorFakeComponent", () => {
 
+  // for example purposes only
+  const createMock = () => {
+    const mockEditor = jasmine.createSpyObj('StandaloneCodeEditor', [
+      'getValue',
+      'setValue',
+      'getModel',
+      'updateOptions',
+      'layout',
+      'dispose',
+      'onDidChangeModelContent',
+      'focus'
+    ]);
+    mockEditor.getValue.and.returnValue('');
+    mockEditor.getModel.and.returnValue({
+      getValue: () => '',
+      setValue: () => {
+      },
+      dispose: () => {
+      }
+    });
+    mockEditor.onDidChangeModelContent.and.returnValue({
+      dispose: () => {
+      }
+    });
+
+
+    const mockEditorNamespace = jasmine.createSpyObj('editor', [
+      'defineTheme',
+      'setTheme',
+      'create'
+    ]);
+
+    mockEditorNamespace.EditorOption = {
+      lineNumbers: 'lineNumbers',
+      wordWrap: 'wordWrap',
+      minimap: 'minimap'
+    };
+
+    const mockLanguagesNamespace = jasmine.createSpyObj('languages', [
+      'register',
+      'setMonarchTokensProvider',
+      'registerCompletionItemProvider'
+    ]);
+
+    mockLanguagesNamespace.json = {
+      jsonDefaults: jasmine.createSpyObj('jsonDefaults', ['setDiagnosticsOptions'])
+    };
+
+    const mockMonaco = {
+      editor: mockEditorNamespace,
+      languages: mockLanguagesNamespace,
+
+      MarkerSeverity: {
+        Error: 8,
+        Warning: 4,
+        Info: 2,
+        Hint: 1
+      },
+
+      KeyMod: {
+        CtrlCmd: 2048,
+        Shift: 1024,
+        Alt: 512,
+        WinCtrl: 256
+      },
+
+      KeyCode: {
+        KEY_S: 83,
+        KEY_F: 70
+      }
+    };
+    mockMonaco.editor.create.and.returnValue(mockEditor);
+    mockMonaco.languages.register.and.returnValue(undefined);
+
+    return {initializedEvent: {editor: mockEditor, monaco: mockMonaco}};
+  }
+
   let fixture: ComponentFixture<WrapperComponent>;
   let loader: HarnessLoader;
+  let mockConfig: MockMonacoEditorConfig
+
 
   beforeEach(async () => {
+    mockConfig = createMock();
+
     await TestBed.configureTestingModule({
       imports: [
         NgClass,
@@ -71,6 +153,10 @@ describe("NgxMonacoEditorFakeComponent", () => {
         WrapperComponent,
         NgxMonacoEditorFakeComponent
       ],
+      providers: [
+        // for example purposes only
+        provideMockMonacoEditor(mockConfig),
+      ]
 
     }).compileComponents();
 
