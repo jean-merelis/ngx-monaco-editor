@@ -22,7 +22,7 @@ import {NgxMonacoEditorComponent} from "@jean-merelis/ngx-monaco-editor";
   imports: [
     FormsModule,
     ReactiveFormsModule,
-    NgxMonacoEditorFakeComponent,
+    NgxMonacoEditorComponent,
   ],
   template: `
     <ngx-monaco-editor [(value)]="code"
@@ -151,14 +151,18 @@ describe("NgxMonacoEditorFakeComponent", () => {
         NgClass,
         NgStyle,
         WrapperComponent,
-        NgxMonacoEditorFakeComponent
       ],
       providers: [
         // for example purposes only
         provideMockMonacoEditor(mockConfig),
       ]
 
-    }).compileComponents();
+    })
+      .overrideComponent(WrapperComponent, {
+        remove: {imports: [NgxMonacoEditorComponent]},
+        add: {imports: [NgxMonacoEditorFakeComponent]}
+      })
+      .compileComponents();
 
     fixture = TestBed.createComponent(WrapperComponent);
     loader = TestbedHarnessEnvironment.loader(fixture);

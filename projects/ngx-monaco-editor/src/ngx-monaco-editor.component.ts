@@ -41,7 +41,7 @@ export interface EditorInitializedEvent {
 }
 
 export interface NgxMonacoEditorConfig {
-  defautlOptions?: StandaloneEditorConstructionOptions;
+  defaultOptions?: StandaloneEditorConstructionOptions;
   runInsideNgZone?: boolean
 }
 
@@ -145,7 +145,7 @@ export class NgxMonacoEditorComponent implements OnInit, OnChanges, ControlValue
 
       const options = Object.assign(
         {},
-        this.deepCopyOrEmpty(this.config?.defautlOptions),
+        this.deepCopyOrEmpty(this.config?.defaultOptions),
         this.options(),
         {
           value: this._value ?? "",
