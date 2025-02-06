@@ -18,6 +18,7 @@ export class DefaultMonacoLoader implements MonacoLoader {
   private config: any
 
   constructor(config: any = {paths: {vs: 'vs'}}, loadOnCreate = true) {
+    this.config = config;
     if (loadOnCreate) {
       this.createPromise();
     }
