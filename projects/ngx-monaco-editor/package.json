@@ -1,6 +1,6 @@
 {
   "name": "@jean-merelis/ngx-monaco-editor",
-  "version": "19.0.2",
+  "version": "19.0.3",
   "private": false,
   "license": "MIT",
   "description": "Monaco Code Editor for Angular",
