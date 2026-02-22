@@ -1,8 +1,8 @@
+import {describe, it, expect, vi, beforeEach} from 'vitest';
 import {ComponentFixture, TestBed} from "@angular/core/testing";
 import {TestbedHarnessEnvironment} from "@angular/cdk/testing/testbed";
 import {HarnessLoader} from "@angular/cdk/testing";
-import {Component, model, viewChild} from "@angular/core";
-import {NgClass, NgStyle} from "@angular/common";
+import {Component, model, provideZonelessChangeDetection, viewChild} from "@angular/core";
 import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 
 import {
@@ -63,35 +63,31 @@ describe("NgxMonacoEditorFakeComponent", () => {
 
   // for example purposes only
   const createMock = () => {
-    const mockEditor = jasmine.createSpyObj('StandaloneCodeEditor', [
-      'getValue',
-      'setValue',
-      'getModel',
-      'updateOptions',
-      'layout',
-      'dispose',
-      'onDidChangeModelContent',
-      'focus'
-    ]);
-    mockEditor.getValue.and.returnValue('');
-    mockEditor.getModel.and.returnValue({
-      getValue: () => '',
-      setValue: () => {
-      },
-      dispose: () => {
-      }
-    });
-    mockEditor.onDidChangeModelContent.and.returnValue({
-      dispose: () => {
-      }
-    });
+    const mockEditor = {
+      getValue: vi.fn().mockReturnValue(''),
+      setValue: vi.fn(),
+      getModel: vi.fn().mockReturnValue({
+        getValue: () => '',
+        setValue: () => {
+        },
+        dispose: () => {
+        }
+      }),
+      updateOptions: vi.fn(),
+      layout: vi.fn(),
+      dispose: vi.fn(),
+      onDidChangeModelContent: vi.fn().mockReturnValue({
+        dispose: () => {
+        }
+      }),
+      focus: vi.fn(),
+    };
 
-
-    const mockEditorNamespace = jasmine.createSpyObj('editor', [
-      'defineTheme',
-      'setTheme',
-      'create'
-    ]);
+    const mockEditorNamespace = {
+      defineTheme: vi.fn(),
+      setTheme: vi.fn(),
+      create: vi.fn().mockReturnValue(mockEditor),
+    } as any;
 
     mockEditorNamespace.EditorOption = {
       lineNumbers: 'lineNumbers',
@@ -99,14 +95,14 @@ describe("NgxMonacoEditorFakeComponent", () => {
       minimap: 'minimap'
     };
 
-    const mockLanguagesNamespace = jasmine.createSpyObj('languages', [
-      'register',
-      'setMonarchTokensProvider',
-      'registerCompletionItemProvider'
-    ]);
+    const mockLanguagesNamespace = {
+      register: vi.fn().mockReturnValue(undefined),
+      setMonarchTokensProvider: vi.fn(),
+      registerCompletionItemProvider: vi.fn(),
+    } as any;
 
     mockLanguagesNamespace.json = {
-      jsonDefaults: jasmine.createSpyObj('jsonDefaults', ['setDiagnosticsOptions'])
+      jsonDefaults: {setDiagnosticsOptions: vi.fn()}
     };
 
     const mockMonaco = {
@@ -132,10 +128,8 @@ describe("NgxMonacoEditorFakeComponent", () => {
         KEY_F: 70
       }
     };
-    mockMonaco.editor.create.and.returnValue(mockEditor);
-    mockMonaco.languages.register.and.returnValue(undefined);
 
-    return {initializedEvent: {editor: mockEditor, monaco: mockMonaco}};
+    return {initializedEvent: {editor: mockEditor as any, monaco: mockMonaco as any}};
   }
 
   let fixture: ComponentFixture<WrapperComponent>;
@@ -148,11 +142,10 @@ describe("NgxMonacoEditorFakeComponent", () => {
 
     await TestBed.configureTestingModule({
       imports: [
-        NgClass,
-        NgStyle,
         WrapperComponent,
       ],
       providers: [
+        provideZonelessChangeDetection(),
         // for example purposes only
         provideMockMonacoEditor(mockConfig),
       ]
@@ -179,7 +172,7 @@ describe("NgxMonacoEditorFakeComponent", () => {
   it("should emit focus event when get focus by click", async () => {
     const ngxMonaco = await loader.getHarness(NgxMonacoEditorFakeHarness);
     await ngxMonaco.focus();
-    expect(await ngxMonaco.isFocused()).toBeTrue();
+    expect(await ngxMonaco.isFocused()).toBe(true);
     expect(fixture.componentInstance.events.some(evt => evt === "focus"));
     expect(fixture.componentInstance.editor).toBeDefined();
     expect(fixture.componentInstance.monaco).toBeDefined();
@@ -188,18 +181,18 @@ describe("NgxMonacoEditorFakeComponent", () => {
   it("should emit focus event when get focus programmatically", async () => {
     fixture.componentInstance.ngxEditor()?.focus()
     const ngxMonaco = await loader.getHarness(NgxMonacoEditorFakeHarness);
-    expect(await ngxMonaco.isFocused()).toBeTrue();
+    expect(await ngxMonaco.isFocused()).toBe(true);
     expect(fixture.componentInstance.events.some(evt => evt === "focus"));
   });
 
   it("should emit blur event when lose focus", async () => {
     fixture.componentInstance.ngxEditor()?.focus()
     const ngxMonaco = await loader.getHarness(NgxMonacoEditorFakeHarness);
-    expect(await ngxMonaco.isFocused()).toBeTrue();
+    expect(await ngxMonaco.isFocused()).toBe(true);
     expect(fixture.componentInstance.events.some(evt => evt === "focus"));
 
     await ngxMonaco.blur();
-    expect(await ngxMonaco.isFocused()).toBeFalse();
+    expect(await ngxMonaco.isFocused()).toBe(false);
     expect(fixture.componentInstance.events.some(evt => evt === "blur"));
   });
 

@@ -1,13 +1,11 @@
 import {
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
   ElementRef,
   forwardRef,
   inject, InjectionToken,
   input,
   model,
-  NgZone,
   OnChanges,
   OnDestroy,
   OnInit,
@@ -18,7 +16,7 @@ import {
   ViewEncapsulation
 } from '@angular/core';
 import {ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR} from '@angular/forms';
-import {CommonModule, DOCUMENT, NgStyle} from "@angular/common";
+import {DOCUMENT} from "@angular/common";
 import {editor as monacoEditor} from 'monaco-editor/esm/vs/editor/editor.api';
 import {NGX_MONACO_LOADER_PROVIDER, NgxMonacoEditorComponent} from "@jean-merelis/ngx-monaco-editor";
 import IStandaloneCodeEditor = monacoEditor.IStandaloneCodeEditor;
@@ -64,12 +62,10 @@ export function provideMockMonacoEditor(config: MockMonacoEditorConfig = {
 @Component({
   selector: 'ngx-monaco-editor',
   imports: [
-    CommonModule,
-    NgStyle,
     FormsModule,
   ],
   template: `
-    <div class="ngx-editor-container" #editorContainer [ngStyle]="editorStyle()">
+    <div class="ngx-editor-container" #editorContainer [style]="editorStyle()">
       <textarea #editor [ngModel]="value()" (ngModelChange)="setValue($event)"
                 (focus)="changedFocus(true)"
                 (blur)="changedFocus(false)">
@@ -106,10 +102,10 @@ export function provideMockMonacoEditor(config: MockMonacoEditorConfig = {
       useExisting: forwardRef(() => NgxMonacoEditorFakeComponent),
       multi: true,
     },
-    {provide: NgxMonacoEditorComponent, useExisting: NgxMonacoEditorFakeComponent}
+    {provide: NgxMonacoEditorComponent, useExisting: forwardRef(() => NgxMonacoEditorFakeComponent)}
   ],
   viewProviders: [
-    {provide: NgxMonacoEditorComponent, useExisting: NgxMonacoEditorFakeComponent}
+    {provide: NgxMonacoEditorComponent, useExisting: forwardRef(() => NgxMonacoEditorFakeComponent)}
   ]
 })
 export class NgxMonacoEditorFakeComponent implements OnInit, OnChanges, ControlValueAccessor, OnDestroy {

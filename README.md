@@ -7,6 +7,13 @@ We will try to follow the MAJOR.MINOR versions of Angular to make it easier to i
 - Angular 17.3 => v17.3.x
 - Angular 18 => v18.x.x
 - Angular 19 => v19.x.x
+- Angular 21 => v21.x.x
+
+### Breaking Changes in v21
+
+- **`runInsideNgZone` removed**: The `runInsideNgZone` property has been removed from `NgxMonacoEditorConfig`. The library now works seamlessly with both zoneless and zone-based apps. Remove this property from your config if you were using it.
+- **`theme` and `language` must use dedicated inputs**: Use `[theme]` and `[language]` inputs instead of passing them in `[options]`. The `options` input type now excludes these properties.
+- **Peer dependencies**: Now require Angular `>=21.0.0`. Consumers must be on Angular 21+.
 
 
 ## Setup
@@ -47,7 +54,6 @@ const monacoLoader = new DefaultMonacoLoader({paths: {vs: 'path/to/vs'}});
 
 @Component({
   selector: 'app-root',
-  standalone: true,
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
   imports: [
@@ -69,7 +75,6 @@ You can provide a global configuration for yours editors.
 ````typescript
 export interface NgxMonacoEditorConfig {
   defaultOptions?: StandaloneEditorConstructionOptions;
-  runInsideNgZone?: boolean
 }
 ````
 
@@ -77,7 +82,6 @@ export interface NgxMonacoEditorConfig {
 
 @Component({
   selector: 'app-root',
-  standalone: true,
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
   imports: [
@@ -87,7 +91,6 @@ export interface NgxMonacoEditorConfig {
     {
       provide: NGX_MONACO_EDITOR_CONFIG,
       useValue: {
-        runInsideNgZone: false,
         defaultOptions: {
           minimap: {enabled: true}
         }
@@ -102,20 +105,18 @@ export class AppComponent {
 
 
 ### Sample
-Include NgxMonacoEditorComponent in the `imports` of the component or module where you want to use the editor. (eg: app.module.ts). Add the provide the `MonacoLoader`:
+Include NgxMonacoEditorComponent in the `imports` of your component. Provide the `MonacoLoader`:
 
 ```typescript
 import {Component} from '@angular/core';
 import {
   DefaultMonacoLoader,
-  EditorInitializedEvent,
   NgxMonacoEditorComponent,
   NGX_MONACO_LOADER_PROVIDER
 } from "@jean-merelis/ngx-monaco-editor";
 
 @Component({
   selector: 'app-root',
-  standalone: true,
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
   imports: [
@@ -126,22 +127,35 @@ import {
   ]
 })
 export class AppComponent {
-  editorOptions = {theme: 'vs-dark', language: 'javascript'};
   code: string = 'function helloWorld() {\nconsole.log("Hello world!");\n}';
 }
 ```
 
 ```html
- <ngx-monaco-editor [options]="editorOptions" [(ngModel)]="code"></ngx-monaco-editor>
+ <ngx-monaco-editor [language]="'javascript'" [theme]="'vs-dark'" [(ngModel)]="code"></ngx-monaco-editor>
 ```
 
 
 
+### Inputs
+
+| Input | Type | Default | Description |
+|-------|------|---------|-------------|
+| `value` | `model<string>` | `''` | Two-way bound editor content |
+| `language` | `input<string>` | `'typescript'` | Language used in editor |
+| `theme` | `input<string>` | `'vs'` | Theme applied to editor |
+| `options` | `input<StandaloneEditorConstructionOptions>` | `{}` | Monaco editor options (excludes `value`, `language`, `theme`) |
+| `editorStyle` | `input<object>` | `{width:'100%', height:'100%', border:'1px solid grey'}` | Style applied to editor container |
+| `fullScreenKeyBinding` | `input<number[]>` | `undefined` | KeyCode bindings for fullscreen mode |
+
 ### Events
-The output event (editorInitialized) emits an EditorInitializedEvent that exposes the editor instance, languages, and worker objects from Monaco API
+The output event (editorInitialized) emits an EditorInitializedEvent that exposes the editor instance and Monaco API
 which can be used to perform custom operations in the editor.
 ```html
-<ngx-monaco-editor #editor [options]="editorOptions" [(ngModel)]="code"
+<ngx-monaco-editor #editor
+                   [language]="'typescript'"
+                   [theme]="'vs-dark'"
+                   [(ngModel)]="code"
                    (editorInitialized)="editorInitialized($event)"
                    (focus)="onFocus()"
                    (blur)="onBlur()"
@@ -152,7 +166,6 @@ which can be used to perform custom operations in the editor.
 
 ```typescript
 export class AppComponent {
-  editorOptions = {theme: 'vs-dark', language: 'typescript'};
   code: string = "const helloWorld = () => 'Hello world';"
   events: string[] = [];
 
@@ -195,18 +208,13 @@ import { NgxMonacoEditorHarness, MonacoEditorHarnessFilters } from "@jean-mereli
 
 Harness for interacting with NgxMonacoEditor in tests.
 
-You may want to run your tests with fakeAsync, so you need to configure to run Monaco Editor inside NgZone.
-Then, in the last line of the test, call the `discardPeriodicTasks()` function
-
 Configure your test to wait for monacoLoader to complete. See the example below:
 
 ```typescript
 
 @Component({
   selector: 'wrapper',
-  standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     ReactiveFormsModule,
     NgxMonacoEditorComponent,
@@ -239,9 +247,6 @@ describe("NgxMonacoEditorComponent", () => {
       ],
       providers: [
         {provide: NGX_MONACO_LOADER_PROVIDER, useFactory: () => new DefaultMonacoLoader()},
-
-        // If you need to run your tests with fakeAsync then run inside NgZone
-        {provide: NGX_MONACO_EDITOR_CONFIG, useValue: {runInsideNgZone: true}}
       ]
     }).compileComponents();
 
@@ -262,16 +267,16 @@ describe("NgxMonacoEditorComponent", () => {
   it("should emit focus event when get focus by click", async () => {
     const ngxMonaco = await loader.getHarness(NgxMonacoEditorHarness);
     await ngxMonaco.focus();
-    expect(await ngxMonaco.isFocused()).toBeTrue();
+    expect(await ngxMonaco.isFocused()).toBe(true);
   });
 
   it("should emit blur event when lose focus", async () => {
     fixture.componentInstance.ngxEditor()?.focus()
     const ngxMonaco = await loader.getHarness(NgxMonacoEditorHarness);
-    expect(await ngxMonaco.isFocused()).toBeTrue();
+    expect(await ngxMonaco.isFocused()).toBe(true);
 
     await ngxMonaco.blur();
-    expect(await ngxMonaco.isFocused()).toBeFalse();
+    expect(await ngxMonaco.isFocused()).toBe(false);
   });
 
   it("should emit value when editor value changes", async () => {
@@ -301,7 +306,7 @@ Due to Monaco Editor's complexity, we recommend using `NgxMonacoEditorFakeCompon
 - Improves test performance
 - Eliminates Monaco Editor initialization overhead
 - Makes tests more stable and predictable
-  
+
 ### Advantages of Using the Fake Component
 
  1. **Faster Tests**: No need to wait for Monaco Editor initialization
@@ -334,7 +339,6 @@ import { NgxMonacoEditorComponent, NgxMonacoEditorFakeComponent, NgxMonacoEditor
 
 @Component({
   selector: 'your-component',
-  standalone: true,
   imports: [NgxMonacoEditorComponent], // Real component in production
   template: `
     <ngx-monaco-editor [(value)]="code"></ngx-monaco-editor>
@@ -424,12 +428,12 @@ describe("YourComponent", () => {
         useValue: {
           initializedEvent: {
             editor: {
-              updateOptions: jasmine.createSpy('updateOptions'),
+              updateOptions: vi.fn(),
               // ... other methods used by your component
             },
             monaco: {
               languages: {
-                register: jasmine.createSpy('register')
+                register: vi.fn()
               }
             }
           }

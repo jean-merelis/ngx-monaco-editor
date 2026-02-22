@@ -1,25 +1,25 @@
 import {
+  afterNextRender,
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
+  effect,
   ElementRef,
   forwardRef,
   inject,
-  InjectionToken,
+  InjectionToken, Injector,
   input,
   model,
   NgZone,
-  OnChanges,
   OnDestroy,
   OnInit,
   output,
   signal,
-  SimpleChanges,
   viewChild,
   ViewEncapsulation
 } from '@angular/core';
 import {ControlValueAccessor, NG_VALUE_ACCESSOR} from '@angular/forms';
-import {DOCUMENT, NgStyle} from "@angular/common";
+import {FormValueControl} from '@angular/forms/signals';
+import {DOCUMENT} from "@angular/common";
 import {MonacoAPI, NGX_MONACO_LOADER_PROVIDER} from "./monaco-loader";
 import {editor as monacoEditor} from 'monaco-editor/esm/vs/editor/editor.api';
 import IStandaloneCodeEditor = monacoEditor.IStandaloneCodeEditor;
@@ -42,18 +42,14 @@ export interface EditorInitializedEvent {
 
 export interface NgxMonacoEditorConfig {
   defaultOptions?: StandaloneEditorConstructionOptions;
-  runInsideNgZone?: boolean
 }
 
 export const NGX_MONACO_EDITOR_CONFIG = new InjectionToken<NgxMonacoEditorConfig>("NGX_MONACO_EDITOR_CONFIG");
 
 @Component({
   selector: 'ngx-monaco-editor',
-  imports: [
-    NgStyle,
-  ],
   template: `
-    <div class="ngx-editor-container" #editorContainer [ngStyle]="editorStyle()">
+    <div class="ngx-editor-container" #editorContainer [style]="editorStyle()">
       @if (monacoLoadFailed()) {
         Monaco was not loaded correctly.
       }
@@ -86,8 +82,7 @@ export const NGX_MONACO_EDITOR_CONFIG = new InjectionToken<NgxMonacoEditorConfig
     },
   ]
 })
-export class NgxMonacoEditorComponent implements OnInit, OnChanges, ControlValueAccessor, OnDestroy {
-
+export class NgxMonacoEditorComponent implements OnInit, OnDestroy, ControlValueAccessor, FormValueControl<string>  {
 
   readonly value = model<string>('');
   readonly options = input<Omit<StandaloneEditorConstructionOptions, "value" | "language" | "theme">>({});
@@ -127,16 +122,44 @@ export class NgxMonacoEditorComponent implements OnInit, OnChanges, ControlValue
   private readonly zone = inject(NgZone);
   private readonly document = inject(DOCUMENT);
   private readonly monacoLoader = inject(NGX_MONACO_LOADER_PROVIDER);
-  private readonly cd = inject(ChangeDetectorRef);
   private readonly elementRef = inject(ElementRef<HTMLElement>);
   private readonly config = inject(NGX_MONACO_EDITOR_CONFIG, {optional: true})
+  private readonly injector = inject(Injector)
   private editor?: StandaloneCodeEditor;
   private resizeObserver?: ResizeObserver;
   private propagateChange = noop;
   private onTouched = noop;
   private _monaco!: MonacoAPI;
-  private changesFromEditor = false;
-  private _value = ""
+
+  constructor() {
+    effect(() => {
+      const val = this.value() ?? "";
+      if (this.editor && this.editor.getValue() !== val) {
+        this.editor.setValue(val);
+      }
+    });
+
+    effect(() => {
+      const theme = this.theme();
+      if (this.editor && theme) {
+        this.editor.updateOptions({theme});
+      }
+    });
+
+    effect(() => {
+      const language = this.language();
+      if (this.editor && this.editor.getModel() && language) {
+        this._monaco.editor.setModelLanguage(this.editor.getModel()!, language);
+      }
+    });
+
+    effect(() => {
+      const options = this.options();
+      if (this.editor) {
+        this.editor.updateOptions(options);
+      }
+    });
+  }
 
   ngOnInit(): void {
     this.monacoLoader.monacoLoaded().then((m) => {
@@ -148,63 +171,37 @@ export class NgxMonacoEditorComponent implements OnInit, OnChanges, ControlValue
         this.deepCopyOrEmpty(this.config?.defaultOptions),
         this.options(),
         {
-          value: this._value ?? "",
+          value: this.value(),
           language: this.language(),
           theme: this.theme(),
         });
 
-      if (this.config?.runInsideNgZone) {
-
+      this.zone.runOutsideAngular(() => {
         this.editor = this._monaco.editor.create(containerDiv, options);
 
-        this.editor.getModel()?.onDidChangeContent((e: any) => {
-          this.changesFromEditor = true;
-          this._value = this.editor!.getValue();
-          this.applyValue();
-          this.propagateChange(this._value);
-          this.value.set(this._value);
+        this.editor.getModel()?.onDidChangeContent((e) => {
+          this.zone.run(() => {
+            const value = this.editor!.getValue();
+            this.value.set(value);
+            this.propagateChange(value);
+          });
         });
 
         this.editor.onDidFocusEditorWidget(() => {
-          this.focused.set(true);
-          this.onFocus.emit()
+          this.zone.run(() => {
+            this.focused.set(true);
+            this.onFocus.emit()
+          });
         });
         this.editor.onDidBlurEditorWidget(() => {
-          this.focused.set(false);
-          this.onTouched();
-          this.onBlur.emit()
-        });
-      } else {
-        this.zone.runOutsideAngular(() => {
-          this.editor = this._monaco.editor.create(containerDiv, options);
-
-          this.editor.getModel()?.onDidChangeContent((e: any) => {
-            this.zone.run(() => {
-              this.changesFromEditor = true;
-              this._value = this.editor!.getValue();
-              this.applyValue();
-              this.propagateChange(this._value);
-              this.value.set(this._value);
-            });
-          });
-
-          this.editor.onDidFocusEditorWidget(() => {
-            this.zone.run(() => {
-              this.focused.set(true);
-              this.onFocus.emit()
-            });
-          });
-          this.editor.onDidBlurEditorWidget(() => {
-            this.zone.run(() => {
-              this.focused.set(false);
-              this.onTouched();
-              this.onBlur.emit()
-            });
+          this.zone.run(() => {
+            this.focused.set(false);
+            this.onTouched();
+            this.onBlur.emit()
           });
         });
-      }
+      });
       Promise.resolve().then(() => {
-        this.applyValue();
         this.editorInitialized.emit({
           editor: this.editor!,
           monaco: this._monaco
@@ -213,7 +210,6 @@ export class NgxMonacoEditorComponent implements OnInit, OnChanges, ControlValue
       this.addFullScreenModeCommand();
       this.resizeObserver = new ResizeObserver(() => {
         this.layout();
-        this.cd.markForCheck();
       });
       this.resizeObserver.observe(this.document.documentElement);
       this.resizeObserver.observe(this.elementRef.nativeElement);
@@ -227,26 +223,6 @@ export class NgxMonacoEditorComponent implements OnInit, OnChanges, ControlValue
     }
   }
 
-  ngOnChanges(changes: SimpleChanges): void {
-    if ('value' in changes) {
-      if (this._value !== changes.value.currentValue) {
-        this._value = changes.value.currentValue ?? "";
-        this.applyValue();
-      }
-    }
-    if (this.editor) {
-      if ('theme' in changes && changes.theme.currentValue) {
-        this.editor.updateOptions({theme: changes.theme.currentValue});
-      }
-      if ('language' in changes && this.editor.getModel() && changes.language.currentValue) {
-        this._monaco.editor.setModelLanguage(this.editor.getModel()!, changes.language.currentValue);
-      }
-      if ('options' in changes) {
-        this.editor.updateOptions(changes.options.currentValue);
-      }
-    }
-  }
-
   private deepCopyOrEmpty(obj: StandaloneEditorConstructionOptions | undefined): StandaloneEditorConstructionOptions {
     if (!obj) {
       return {};
@@ -254,22 +230,11 @@ export class NgxMonacoEditorComponent implements OnInit, OnChanges, ControlValue
     return JSON.parse(JSON.stringify(obj));
   }
 
-  private applyValue(): void {
-    if (this.editor && !this.changesFromEditor) {
-      this.editor.setValue(this._value ?? '');
-    }
-    this.changesFromEditor = false;
-  }
-
   /**
    * Implemented as part of ControlValueAccessor.
    */
   writeValue(value: any): void {
-    value = value ?? "";
-    if (this._value !== value) {
-      this._value = value;
-      this.applyValue();
-    }
+    this.value.set(value ?? "");
   }
 
   registerOnChange(fn: any): void {

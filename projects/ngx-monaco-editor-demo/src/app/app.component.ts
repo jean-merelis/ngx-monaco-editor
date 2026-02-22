@@ -1,4 +1,4 @@
-import {ChangeDetectorRef, Component, model} from '@angular/core';
+import {Component, model} from '@angular/core';
 import {
   DefaultMonacoLoader,
   NGX_MONACO_LOADER_PROVIDER,
@@ -22,9 +22,6 @@ import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 export class AppComponent {
   code = model("const helloWorld = () => 'Hello world';");
   events: string[] = [];
-
-  constructor(private cd: ChangeDetectorRef) {
-  }
 
   editorInitialized(editor: any) {
     this.events.push("editorInitialized");
